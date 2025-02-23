@@ -58,6 +58,7 @@ class DataParser:
         ).agg(
             total_ms_played=pd.NamedAgg(column='total_ms_played', aggfunc='sum'),
             play_count=pd.NamedAgg(column='play_count', aggfunc='sum'),
+            artist_name=pd.NamedAgg(column='artist_name', aggfunc='first'),
         ).reset_index()
 
         return final_grouped_df
