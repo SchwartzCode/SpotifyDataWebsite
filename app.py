@@ -4,6 +4,7 @@ import zipfile
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
+import pandas as pd
 
 app = Flask(__name__)
 # TODO: what is this doing?
@@ -29,13 +30,38 @@ class DataParser:
         self.data = data
 
     def parse(self):
+        dfs = []
         # Implement your data parsing logic here
-        print(f"json data size: ", len(self.data))
         for (key, value) in self.data.items():
             print(f"key: {key}, value size: {len(value)}")
-            print(f"first element: {value[0]}")
-            print(f"key type {type(key)}, value elem type {type(value[0])}")
-        return self.data
+
+            # Convert to Pandas DataFrame
+            df = pd.DataFrame(value)
+
+            # Aggregate by 'spotify_track_uri' at this step
+            grouped_df = df.groupby(['master_metadata_track_name', 'master_metadata_album_artist_name']).agg(
+                total_ms_played=pd.NamedAgg(column='ms_played', aggfunc='sum'),
+                play_count=pd.NamedAgg(column='spotify_track_uri', aggfunc='count'),
+                track_name=pd.NamedAgg(column='master_metadata_track_name', aggfunc='first'),
+                artist_name=pd.NamedAgg(column='master_metadata_album_artist_name', aggfunc='first'),
+                album_name=pd.NamedAgg(column='master_metadata_album_album_name', aggfunc='first')
+            ).reset_index()
+            dfs.append(grouped_df)
+
+        # Combine all DataFrames into one
+        combined_df = pd.concat(dfs, ignore_index=True)
+        print(f"Columns in combined_df before groupby: {combined_df.columns}")
+
+        # Perform grouping after combining
+        final_grouped_df = combined_df.groupby(
+            ['album_name', 'track_name']
+        ).agg(
+            total_ms_played=pd.NamedAgg(column='total_ms_played', aggfunc='sum'),
+            play_count=pd.NamedAgg(column='play_count', aggfunc='sum'),
+        ).reset_index()
+
+        return final_grouped_df
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -63,16 +89,21 @@ def upload_file():
         json_data = {}
         for root, _, files in os.walk(extract_path):
             for file in files:
+                print(f"Loading in: {file}")
                 if file.endswith('.json'):
                     json_path = os.path.join(root, file)
                     try:
                         with open(json_path, 'r', encoding='utf-8') as f:  # Safe loading with UTF-8
+                            print("Adding data!")
                             json_data[file] = json.load(f)
                     except json.JSONDecodeError:
+                        print("error error error\n\n")
                         return jsonify({'message': f'Error reading {file}, invalid JSON format'}), 400
 
         dataParser = DataParser(json_data)
-        dataParser.parse()
+        combined_df = dataParser.parse()
+        # json_data = combined_df.astype(str).to_dict(orient="records")
+        json_data = combined_df.map(lambda x: x.item() if hasattr(x, "item") else x).to_dict(orient="records")
         return jsonify({'message': 'Files processed successfully!', 'data': json_data}), 200
     
     return jsonify({'message': 'Invalid file type'}), 400

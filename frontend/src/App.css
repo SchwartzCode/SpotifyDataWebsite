@@ -1,0 +1,95 @@
+/* Container to hold the table */
+.table-wrapper {
+  overflow-x: auto; /* Allow horizontal scrolling if necessary */
+  max-width: 100%; /* Ensure it doesn't overflow */
+}
+
+/* Table styles */
+.styled-table {
+  width: 100%;
+  table-layout: fixed; /* Ensure table columns behave properly */
+  border-collapse: collapse;
+}
+
+/* Table row styles */
+.styled-table td,
+.styled-table th {
+  border: 1px solid black; /* Ensure borders are visible */
+  padding: 12px 20px;
+  text-align: left;
+}
+
+/* Optional: You can add additional styles for the active sort column */
+.sort-active {
+  background-color: #1ed760;
+}
+
+/* Main container styling */
+.container {
+  padding: 20px;
+  font-family: "Roboto", sans-serif;
+  max-width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Table container to handle overflow */
+.table-container {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+/* Table styling */
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 12px 20px;
+  text-align: left;
+  white-space: nowrap; /* Prevents text from wrapping inside cells */
+  border: 1px solid black; /* Black lines dividing columns */
+}
+
+.styled-table th {
+  background-color: #1DB954; /* Classic Spotify green for column titles */
+  color: white;
+  cursor: pointer;
+}
+
+.styled-table td {
+  background-color: #d4f7d1; /* Very light shade of Spotify's green for entries */
+}
+
+.styled-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Active sort column - darker shade of green */
+.styled-table th.sort-active {
+  background-color: #1ed760; /* Darker shade of green when sorting */
+}
+
+/* Styling for sorted columns */
+.styled-table th:active {
+  background-color: #45a049;
+}
+
+/* Alternate row color */
+.styled-table tr.even {
+  background-color: #f9f9f9;
+}
+
+.styled-table tr.odd {
+  background-color: white;
+}
+
+/* Loading text styling */
+.loading {
+  font-size: 18px;
+  color: #888;
+}
