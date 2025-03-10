@@ -61,13 +61,14 @@ interface TableHeadProps {
 
 export const TableHead = ({ children, onClick, isSorted, isAscending }: TableHeadProps) => (
   <th 
-    className="py-2 px-4 text-center whitespace-nowrap"
-    // className="whitespace-nowrap text-white border-b border-gray-300 px-4 py-2 bg-gray-400 flex items-center"
+    className="py-2 px-4 text-center whitespace-nowrap hover:bg-spotify-medium-gray"
     style={{ fontWeight: 400 }}
     onClick={onClick}
   >
-    {children}
-    {isSorted && (isAscending ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />)}
+    <div className="flex items-center justify-center gap-2">
+      {children}
+      {isSorted && (isAscending ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />)}
+    </div>
   </th>
 );
 
