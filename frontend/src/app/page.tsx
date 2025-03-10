@@ -54,7 +54,7 @@ export default function FileUploader() {
   });
 
   return (
-    <div className="flex flex-col items-center space-y-6 p-6 bg-dark-gray">
+    <div className="flex flex-col items-center space-y-6 p-6 bg-black spotify-off-white">
       <Card>
         <CardHeader>
           <CardTitle>Upload Your Spotify ZIP File</CardTitle>
@@ -62,13 +62,13 @@ export default function FileUploader() {
         <CardContent>
           <div
             {...getRootProps()}
-            className="border-2 border-dashed border-gray-300 p-6 rounded-xl text-center cursor-pointer hover:bg-gray-100"
+            className="border-2 border-dashed border-gray-300 p-6 rounded-xl text-center cursor-pointer hover:bg-spotify-medium-gray"
           >
             <input {...getInputProps()} />
             {isDragActive ? (
-              <p className="text-gray-600">Drop the file here...</p>
+              <p className="text-spotify-off-white">Drop the file here...</p>
             ) : (
-              <p className="text-gray-600">Drag & drop a ZIP file, or click to select one</p>
+              <p className="text-spotify-off-white">Drag & drop a ZIP file, or click to select one</p>
             )}
           </div>
 
@@ -79,9 +79,6 @@ export default function FileUploader() {
 
       {data.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Processed Data</CardTitle>
-          </CardHeader>
           <CardContent>
             <DataTable data={data} /> {/* Replace the original table with DataTable */}
           </CardContent>

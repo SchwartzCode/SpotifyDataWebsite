@@ -7,11 +7,12 @@ interface CardProps {
 }
 
 export const Card = ({ children }: CardProps) => (
-  <div className="bg-gray-400 shadow-lg rounded-lg p-4">{children}</div>
+  // <div className="bg-gradient-to-b from-spotify-green-darkest via-spotify-green-dark to-spotify-green shadow-lg rounded-lg p-4">{children}</div>
+  <div className="bg-spotify-dark-gray shadow-lg rounded-lg p-4">{children}</div>
 );
 
 export const CardContent = ({ children }: CardProps) => (
-  <div className="text-gray-800">{children}</div>
+  <div className="text-spotify-off-white">{children}</div>
 );
 
 export const CardHeader = ({ children }: CardProps) => (
@@ -19,5 +20,5 @@ export const CardHeader = ({ children }: CardProps) => (
 );
 
 export const CardTitle = ({ children }: CardProps) => (
-  <h3 className="text-xl font-semibold">{children}</h3>
+  <h3 className="text-spotify-off-white font-semibold">{children}</h3>
 );

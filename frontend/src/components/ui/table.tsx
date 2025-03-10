@@ -1,14 +1,13 @@
 import { ReactNode, useState } from "react";
-// import classNames from "classnames";
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 
 interface TableProps {
   children: ReactNode;
 }
 
 export const Table = ({ children }: TableProps) => (
-  <div className="overflow-x-auto bg-sidebar">
-    <table className="min-w-full table-auto table-fixed bg-sidebar border-collapse">{children}</table>
-    {/* <table className="min-w-full table-auto bg-sidebar">{children}</table> */}
+  <div className="overflow-x-auto">
+    <table className="min-w-full table-auto table-fixed bg-spotify-dark-gray font-sans" style={{ fontWeight: 250 }}>{children}</table>
   </div>
 );
 
@@ -27,17 +26,18 @@ interface TableHeaderProps {
 }
 
 export const TableHeader = ({ children }: TableHeaderProps) => (
-  <thead className="bg-sidebar">{children}</thead>
+  <thead>{children}</thead>
 );
 
 interface TableRowProps {
   children: ReactNode;
   className?: string;
   style?: React.CSSProperties; // Update this to use the correct type for inline styles
+  onClick?: () => void;
 }
 
-export const TableRow = ({ children, className, style }: TableRowProps) => (
-  <tr className={className} style={style}>
+export const TableRow = ({ children, className, style, onClick }: TableRowProps) => (
+  <tr className={className} style={style} onClick={onClick}>
     {children}
   </tr>
 );
@@ -61,11 +61,13 @@ interface TableHeadProps {
 
 export const TableHead = ({ children, onClick, isSorted, isAscending }: TableHeadProps) => (
   <th 
-    className="py-2 px-4 text-center border-4 border-spotify-green-darkest font-semibold whitespace-nowrap bg-spotify-green-darker"
+    className="py-2 px-4 text-center whitespace-nowrap"
+    // className="whitespace-nowrap text-white border-b border-gray-300 px-4 py-2 bg-gray-400 flex items-center"
+    style={{ fontWeight: 400 }}
     onClick={onClick}
   >
     {children}
-    {isSorted && (isAscending ? " 🔼" : " 🔽")}
+    {isSorted && (isAscending ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />)}
   </th>
 );
 
@@ -74,6 +76,16 @@ interface DataTableProps {
 }
 
 export const DataTable = ({ data }: DataTableProps) => {
+  const [selectedRowIndexes, setSelectedRowIndexes] = useState<number[]>([]);
+
+  const handleRowClick = (index: number) => {
+    setSelectedRowIndexes((prevSelectedIndexes) =>
+      prevSelectedIndexes.includes(index)
+        ? prevSelectedIndexes.filter((i) => i !== index) // Deselect the row if clicked again
+        : [...prevSelectedIndexes, index] // Select the row
+    );
+  };
+
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
@@ -121,12 +133,16 @@ export const DataTable = ({ data }: DataTableProps) => {
         {sortedData.map((row, index) => (
           <TableRow
             key={index}
-            className={index % 2 === 0 ? "bg-spotify-green" : "bg-spotify-green-dark"}
+            onClick={() => handleRowClick(index)}
+            className={`
+              ${selectedRowIndexes.includes(index) ? "bg-spotify-light-gray" : "hover:bg-spotify-medium-gray"} 
+              transition-colors duration-50
+            `}
           >
             {Object.keys(row).map((key) => (
               <TableCell
                 key={key}
-                className="border-2 border-spotify-green-darker px-4 py-2"
+                className="px-4 py-2"
               >
                 {row[key]}
               </TableCell>
