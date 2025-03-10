@@ -7,7 +7,7 @@ interface TableProps {
 
 export const Table = ({ children }: TableProps) => (
   <div className="overflow-x-auto">
-    <table className="min-w-full table-auto table-fixed bg-spotify-dark-gray font-sans" style={{ fontWeight: 250 }}>{children}</table>
+    <table className="min-w-full table-auto table-fixed bg-spotify-dark-gray max-w-xs" style={{ fontWeight: 250 }}>{children}</table>
   </div>
 );
 
@@ -96,7 +96,10 @@ export const DataTable = ({ data }: DataTableProps) => {
       setSortColumn(column);
       setSortDirection("asc");
     }
+    setSelectedRowIndexes([]);
   };
+
+  const columnOrder = ['Song', 'Artist', 'Album', 'Plays', 'Minutes Played']; // Adjust the order based on your data
 
   const sortedData = [...data].sort((a, b) => {
     if (sortColumn === null) return 0;
@@ -117,7 +120,7 @@ export const DataTable = ({ data }: DataTableProps) => {
     <Table>
       <TableHeader>
         <TableRow>
-          {Object.keys(data[0]).map((key) => (
+          {columnOrder.map((key) => (
             <TableHead
               key={key}
               onClick={() => handleSort(key)}
@@ -139,10 +142,10 @@ export const DataTable = ({ data }: DataTableProps) => {
               transition-colors duration-50
             `}
           >
-            {Object.keys(row).map((key) => (
+            {columnOrder.map((key) => (
               <TableCell
                 key={key}
-                className="px-4 py-2"
+                className="px-4 py-2 truncate max-w-xs overflow-hidden"
               >
                 {row[key]}
               </TableCell>

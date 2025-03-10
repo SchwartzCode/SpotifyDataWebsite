@@ -54,7 +54,7 @@ export default function FileUploader() {
   });
 
   return (
-    <div className="flex flex-col items-center space-y-6 p-6 bg-black spotify-off-white">
+    <div className="flex flex-col items-center space-y-6 p-6 bg-black test-spotify-off-white font-sans">
       <Card>
         <CardHeader>
           <CardTitle>Upload Your Spotify ZIP File</CardTitle>
@@ -72,7 +72,7 @@ export default function FileUploader() {
             )}
           </div>
 
-          {loading && <p className="text-blue-500 text-center mt-4">Loading...</p>}
+          {loading && <p className="text-center mt-4">Loading...</p>}
           {error && <p className="text-red-500 text-center mt-4">{error}</p>}
         </CardContent>
       </Card>

@@ -61,6 +61,16 @@ class DataParser:
             artist_name=pd.NamedAgg(column='artist_name', aggfunc='first'),
         ).reset_index()
 
+        # Convert milliseconds to minutes and round to nearest hundredths place
+        final_grouped_df['Minutes Played'] = (final_grouped_df['total_ms_played'] / 60000).round(2)
+        final_grouped_df.drop(columns=['total_ms_played'], inplace=True)
+        final_grouped_df.rename(columns={
+            "play_count": "Plays",
+            "artist_name": "Artist",
+            "album_name": "Album",
+            "track_name": "Song"
+        }, inplace=True)
+
         return final_grouped_df
 
 
@@ -103,7 +113,6 @@ def upload_file():
 
         dataParser = DataParser(json_data)
         combined_df = dataParser.parse()
-        # json_data = combined_df.astype(str).to_dict(orient="records")
         json_data = combined_df.map(lambda x: x.item() if hasattr(x, "item") else x).to_dict(orient="records")
         return jsonify({'message': 'Files processed successfully!', 'data': json_data}), 200
     
