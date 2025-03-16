@@ -8,6 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        /**TODO - i dont think these are doing anything */
         'spotify-dark-gray': 'oklch(0.12 0.05 70)',
         'spotify-off-white': 'oklch(0.90 0.03 100)',
       },

@@ -1,3 +1,5 @@
+// src/components/ui/table.tsx
+
 import { ReactNode, useState } from "react";
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 
@@ -6,8 +8,8 @@ interface TableProps {
 }
 
 export const Table = ({ children }: TableProps) => (
-  <div className="overflow-x-auto">
-    <table className="min-w-full table-auto table-fixed bg-spotify-dark-gray max-w-xs" style={{ fontWeight: 250 }}>{children}</table>
+  <div className="overflow-x-auto w-full">
+    <table className="min-w-full table-auto bg-spotify-dark-gray" style={{ fontWeight: 250 }}>{children}</table>
   </div>
 );
 
@@ -20,7 +22,6 @@ export const TableBody = ({ children, className }: TableBodyProps) => (
   <tbody className={className}>{children}</tbody>
 );
 
-
 interface TableHeaderProps {
   children: ReactNode;
 }
@@ -32,7 +33,7 @@ export const TableHeader = ({ children }: TableHeaderProps) => (
 interface TableRowProps {
   children: ReactNode;
   className?: string;
-  style?: React.CSSProperties; // Update this to use the correct type for inline styles
+  style?: React.CSSProperties;
   onClick?: () => void;
 }
 
@@ -73,22 +74,58 @@ export const TableHead = ({ children, onClick, isSorted, isAscending }: TableHea
 );
 
 interface DataTableProps {
-  data: { [key: string]: string | number | boolean }[]; // Replace with the actual structure of your data rows
+  data: { [key: string]: any }[];
 }
 
 export const DataTable = ({ data }: DataTableProps) => {
   const [selectedRowIndexes, setSelectedRowIndexes] = useState<number[]>([]);
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Simple, robust approach to get all columns from data
+  const getAllColumns = () => {
+    // If no data, return empty array
+    if (!data || data.length === 0) return [];
+    
+    // Collect all possible column names from all objects
+    const columnSet = new Set<string>();
+    data.forEach(item => {
+      if (item && typeof item === 'object') {
+        Object.keys(item).forEach(key => columnSet.add(key));
+      }
+    });
+    
+    return Array.from(columnSet);
+  };
+
+  // Get columns and order them in a sensible way
+  const getOrderedColumns = () => {
+    const allColumns = getAllColumns();
+    
+    // Define known important columns to show first
+    const priorityColumns = ['Song', 'Artist', 'Album', 'Plays', 'Minutes Played'];
+    
+    // Sort by priority first, then alphabetically
+    return allColumns.sort((a, b) => {
+      const aIndex = priorityColumns.indexOf(a);
+      const bIndex = priorityColumns.indexOf(b);
+      
+      if (aIndex >= 0 && bIndex >= 0) return aIndex - bIndex;
+      if (aIndex >= 0) return -1;
+      if (bIndex >= 0) return 1;
+      return a.localeCompare(b);
+    });
+  };
+
+  const columnOrder = getOrderedColumns();
 
   const handleRowClick = (index: number) => {
     setSelectedRowIndexes((prevSelectedIndexes) =>
       prevSelectedIndexes.includes(index)
-        ? prevSelectedIndexes.filter((i) => i !== index) // Deselect the row if clicked again
-        : [...prevSelectedIndexes, index] // Select the row
+        ? prevSelectedIndexes.filter((i) => i !== index)
+        : [...prevSelectedIndexes, index]
     );
   };
-
-  const [sortColumn, setSortColumn] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -100,55 +137,69 @@ export const DataTable = ({ data }: DataTableProps) => {
     setSelectedRowIndexes([]);
   };
 
-  const columnOrder = ['Song', 'Artist', 'Album', 'Plays', 'Minutes Played']; // Adjust the order based on your data
+  // Format cell value for display
+  const formatValue = (value: any): string => {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "number") {
+      // Format numbers with commas for thousands
+      return value.toLocaleString();
+    }
+    return String(value);
+  };
 
   const sortedData = [...data].sort((a, b) => {
-    if (sortColumn === null) return 0;
-
+    if (!sortColumn) return 0;
+    
     const aValue = a[sortColumn];
     const bValue = b[sortColumn];
-
-    if (aValue < bValue) {
-      return sortDirection === "asc" ? -1 : 1;
-    }
-    if (aValue > bValue) {
-      return sortDirection === "asc" ? 1 : -1;
-    }
+    
+    // Handle undefined/null values
+    if (aValue === undefined || aValue === null) return 1;
+    if (bValue === undefined || bValue === null) return -1;
+    
+    // Compare values
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
     return 0;
   });
+
+  // If no data or no columns, show message
+  if (data.length === 0 || columnOrder.length === 0) {
+    return <div className="text-spotify-off-white p-4">No data available</div>;
+  }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          {columnOrder.map((key) => (
+          {columnOrder.map((column) => (
             <TableHead
-              key={key}
-              onClick={() => handleSort(key)}
-              isSorted={sortColumn === key}
+              key={column}
+              onClick={() => handleSort(column)}
+              isSorted={sortColumn === column}
               isAscending={sortDirection === "asc"}
             >
-              {key}
+              {column}
             </TableHead>
           ))}
         </TableRow>
       </TableHeader>
       <TableBody>
-        {sortedData.map((row, index) => (
+        {sortedData.map((row, rowIndex) => (
           <TableRow
-            key={index}
-            onClick={() => handleRowClick(index)}
+            key={rowIndex}
+            onClick={() => handleRowClick(rowIndex)}
             className={`
-              ${selectedRowIndexes.includes(index) ? "bg-spotify-light-gray" : "hover:bg-spotify-medium-gray"} 
+              ${selectedRowIndexes.includes(rowIndex) ? "bg-spotify-light-gray" : "hover:bg-spotify-medium-gray"} 
               transition-colors duration-50
             `}
           >
-            {columnOrder.map((key) => (
+            {columnOrder.map((column) => (
               <TableCell
-                key={key}
-                className="px-4 py-2 truncate max-w-xs overflow-hidden"
+                key={`${rowIndex}-${column}`}
+                className="px-4 py-2 truncate overflow-hidden"
               >
-                {row[key]}
+                {formatValue(row[column])}
               </TableCell>
             ))}
           </TableRow>
