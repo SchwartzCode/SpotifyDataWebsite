@@ -11,10 +11,27 @@ interface TabItem {
 interface TabNavigationProps {
   tabs: TabItem[];
   defaultTab?: string;
+  activeTab?: string;
+  setActiveTab?: (tabId: string) => void;
 }
 
-export const TabNavigation = ({ tabs, defaultTab }: TabNavigationProps) => {
-  const [activeTab, setActiveTab] = useState<string>(defaultTab || tabs[0]?.id || "");
+export const TabNavigation = ({ tabs, defaultTab, activeTab, setActiveTab }: TabNavigationProps) => {
+  // Use the controlled activeTab if provided, otherwise use internal state
+  const [internalActiveTab, setInternalActiveTab] = useState<string>(defaultTab || tabs[0]?.id || "");
+  
+  // Determine which active tab state to use
+  const currentTab = activeTab !== undefined ? activeTab : internalActiveTab;
+  
+  // Function to handle tab change
+  const handleTabChange = (tabId: string) => {
+    if (setActiveTab) {
+      // If external control is provided, use it
+      setActiveTab(tabId);
+    } else {
+      // Otherwise use internal state
+      setInternalActiveTab(tabId);
+    }
+  };
 
   return (
     <div className="flex flex-col w-full">
@@ -22,10 +39,10 @@ export const TabNavigation = ({ tabs, defaultTab }: TabNavigationProps) => {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
             className={`px-4 py-2 font-semibold transition-colors duration-200 
               ${
-                activeTab === tab.id
+                currentTab === tab.id
                   ? "text-spotify-green border-b-2 border-spotify-green"
                   : "text-spotify-off-white hover:text-spotify-green"
               }`}
@@ -35,7 +52,7 @@ export const TabNavigation = ({ tabs, defaultTab }: TabNavigationProps) => {
         ))}
       </div>
       <div className="mt-4">
-        {tabs.find((tab) => tab.id === activeTab)?.content}
+        {tabs.find((tab) => tab.id === currentTab)?.content}
       </div>
     </div>
   );

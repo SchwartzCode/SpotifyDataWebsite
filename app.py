@@ -7,7 +7,6 @@ from flask_cors import CORS
 import pandas as pd
 
 app = Flask(__name__)
-# TODO: what is this doing?
 CORS(app)  # Enable CORS for frontend requests
 
 UPLOAD_FOLDER = 'uploads'
@@ -21,15 +20,30 @@ app.config['EXTRACT_FOLDER'] = EXTRACT_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(EXTRACT_FOLDER, exist_ok=True)
 
-# TODO: different file
 class DataParser:
-    # TODO: more specific type
-    data: dict
-
-    def __init__(self, data):
+    def __init__(self, data=None):
         self.data = data
+        # Each instance has its own processed data
+        # This prevents caching issues between different uploads
+        self.processed_data = None
+        # Cache for aggregated data
+        self.album_data = None
+        self.artist_data = None
+        # Cache for sorted data
+        self.song_data_sorted = {}
+        self.album_data_sorted = {}
+        self.artist_data_sorted = {}
 
     def parse(self):
+        """Parse the raw Spotify data and return song-level DataFrame"""
+        # If this instance already has processed data, return it
+        if self.processed_data is not None:
+            return self.processed_data
+            
+        # No data to process
+        if self.data is None:
+            return pd.DataFrame()  # Return empty DataFrame
+            
         dfs = []
         # Implement your data parsing logic here
         for (key, value) in self.data.items():
@@ -49,6 +63,9 @@ class DataParser:
             dfs.append(grouped_df)
 
         # Combine all DataFrames into one
+        if not dfs:
+            return pd.DataFrame()  # Return empty DataFrame
+            
         combined_df = pd.concat(dfs, ignore_index=True)
         print(f"Columns in combined_df before groupby: {combined_df.columns}")
 
@@ -70,15 +87,133 @@ class DataParser:
             "album_name": "Album",
             "track_name": "Song"
         }, inplace=True)
-
+        
+        # Store the processed data in this instance
+        self.processed_data = final_grouped_df
+        
         return final_grouped_df
+    
+    def get_album_aggregation(self, song_df=None):
+        """Aggregate data to album level"""
+        # Return cached data if available
+        if self.album_data is not None:
+            return self.album_data
+            
+        if song_df is None:
+            song_df = self.parse()
+            
+        if song_df.empty:
+            return pd.DataFrame()
+        
+        # Group by Album and Artist
+        album_df = song_df.groupby(['Album', 'Artist']).agg(
+            Plays=pd.NamedAgg(column='Plays', aggfunc='sum'),
+            Minutes_Played=pd.NamedAgg(column='Minutes Played', aggfunc='sum'),
+            Songs=pd.NamedAgg(column='Song', aggfunc='count')
+        ).reset_index()
+        
+        # Round minutes to 1 decimal place
+        album_df['Minutes Played'] = album_df['Minutes_Played'].round(1)
+        album_df.drop(columns=['Minutes_Played'], inplace=True)
+        
+        # Sort by plays descending
+        album_df = album_df.sort_values('Plays', ascending=False)
+        
+        # Cache the result
+        self.album_data = album_df
+        
+        return album_df
+    
+    def get_artist_aggregation(self, song_df=None):
+        """Aggregate data to artist level"""
+        # Return cached data if available
+        if self.artist_data is not None:
+            return self.artist_data
+            
+        if song_df is None:
+            song_df = self.parse()
+            
+        if song_df.empty:
+            return pd.DataFrame()
+        
+        # First, create album aggregation to count albums per artist
+        album_count = song_df.groupby('Artist')['Album'].nunique().reset_index()
+        album_count.columns = ['Artist', 'Albums']
+        
+        # Now aggregate other metrics
+        artist_df = song_df.groupby(['Artist']).agg(
+            Plays=pd.NamedAgg(column='Plays', aggfunc='sum'),
+            Minutes_Played=pd.NamedAgg(column='Minutes Played', aggfunc='sum'),
+            Songs=pd.NamedAgg(column='Song', aggfunc='count')
+        ).reset_index()
+        
+        # Merge with album count
+        artist_df = artist_df.merge(album_count, on='Artist')
+        
+        # Round minutes to 1 decimal place
+        artist_df['Minutes Played'] = artist_df['Minutes_Played'].round(1)
+        artist_df.drop(columns=['Minutes_Played'], inplace=True)
+        
+        # Sort by plays descending
+        artist_df = artist_df.sort_values('Plays', ascending=False)
+        
+        # Cache the result
+        self.artist_data = artist_df
+        
+        return artist_df
 
+    def get_sorted_data(self, data_type, sort_column, direction="desc"):
+        """Get pre-sorted data for faster client-side rendering"""
+        # Get the appropriate data set
+        if data_type == 'song':
+            if self.processed_data is None:
+                self.parse()
+            df = self.processed_data
+            cache = self.song_data_sorted
+        elif data_type == 'album':
+            if self.album_data is None:
+                self.get_album_aggregation()
+            df = self.album_data
+            cache = self.album_data_sorted
+        elif data_type == 'artist':
+            if self.artist_data is None:
+                self.get_artist_aggregation()
+            df = self.artist_data
+            cache = self.artist_data_sorted
+        else:
+            return []
+            
+        if df is None or df.empty:
+            return []
+            
+        # Check if we already have this sort cached
+        cache_key = f"{sort_column}_{direction}"
+        if cache_key in cache:
+            return cache[cache_key]
+            
+        # Sort the data
+        try:
+            ascending = direction.lower() != "desc"
+            sorted_df = df.sort_values(by=sort_column, ascending=ascending)
+            sorted_data = sorted_df.to_dict(orient="records")
+            
+            # Cache the result
+            cache[cache_key] = sorted_data
+            return sorted_data
+        except:
+            # Fallback if sorting fails
+            return df.to_dict(orient="records")
+
+# Store the most recent parser for the /api/data endpoints
+current_parser = None
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
+    global current_parser
+    
     if 'file' not in request.files:
         return jsonify({'message': 'No file part'}), 400
     
@@ -111,12 +246,68 @@ def upload_file():
                         print("error error error\n\n")
                         return jsonify({'message': f'Error reading {file}, invalid JSON format'}), 400
 
-        dataParser = DataParser(json_data)
-        combined_df = dataParser.parse()
-        json_data = combined_df.map(lambda x: x.item() if hasattr(x, "item") else x).to_dict(orient="records")
-        return jsonify({'message': 'Files processed successfully!', 'data': json_data}), 200
+        # Create new parser and process the data
+        data_parser = DataParser(json_data)
+        current_parser = data_parser  # Update the current parser
+        
+        # Process all data at once for faster subsequent access
+        song_df = data_parser.parse()
+        album_df = data_parser.get_album_aggregation(song_df)
+        artist_df = data_parser.get_artist_aggregation(song_df)
+        
+        # Convert to records format for JSON serialization
+        song_data = song_df.to_dict(orient="records")
+        album_data = album_df.to_dict(orient="records")
+        artist_data = artist_df.to_dict(orient="records")
+        
+        # Pre-sort data by plays for common use case
+        data_parser.get_sorted_data('song', 'Plays', 'desc')
+        data_parser.get_sorted_data('album', 'Plays', 'desc')
+        data_parser.get_sorted_data('artist', 'Plays', 'desc')
+        
+        # Return all three aggregation levels
+        response_data = {
+            'song': song_data,
+            'album': album_data,
+            'artist': artist_data
+        }
+        
+        return jsonify({'message': 'Files processed successfully!', 'data': response_data}), 200
     
     return jsonify({'message': 'Invalid file type'}), 400
+
+@app.route('/api/data/<aggregation_level>', methods=['GET'])
+def get_data(aggregation_level):
+    """Endpoint to get data at specific aggregation level without reuploading"""
+    global current_parser
+    
+    if current_parser is None:
+        return jsonify({'message': 'No data available. Please upload a file first.'}), 404
+    
+    if aggregation_level == 'song':
+        data = current_parser.parse().to_dict(orient="records")
+    elif aggregation_level == 'album':
+        data = current_parser.get_album_aggregation().to_dict(orient="records")
+    elif aggregation_level == 'artist':
+        data = current_parser.get_artist_aggregation().to_dict(orient="records")
+    else:
+        return jsonify({'message': 'Invalid aggregation level'}), 400
+    
+    return jsonify({'data': data}), 200
+
+@app.route('/api/data/<aggregation_level>/sort', methods=['GET'])
+def get_sorted_data(aggregation_level):
+    """Endpoint to get pre-sorted data for faster rendering"""
+    global current_parser
+    
+    if current_parser is None:
+        return jsonify({'message': 'No data available. Please upload a file first.'}), 404
+        
+    sort_column = request.args.get('column', 'Plays')
+    direction = request.args.get('direction', 'desc')
+    
+    data = current_parser.get_sorted_data(aggregation_level, sort_column, direction)
+    return jsonify({'data': data}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
