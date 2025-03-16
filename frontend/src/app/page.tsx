@@ -12,6 +12,14 @@ interface DataItem {
   [key: string]: any;
 }
 
+// TODO: is this normal?
+// Spotify logo SVG component
+const SpotifyLogo = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 168" width="32" height="32" className="inline-block mr-2 align-middle">
+    <path fill="#1ED760" d="M83.996 0C37.747 0 0 37.746 0 84c0 46.251 37.747 84 83.996 84 46.254 0 84.004-37.749 84.004-84 0-46.254-37.75-84-84.004-84zm38.326 120.831c-1.503 2.466-4.7 3.24-7.151 1.737-19.597-11.991-44.296-14.7-73.346-8.047-2.788.637-5.583-1.118-6.22-3.905-.636-2.787 1.118-5.583 3.905-6.22 31.9-7.293 59.263-4.154 81.337 9.334 2.451 1.503 3.225 4.7 1.724 7.101zm10.234-22.799c-1.894 3.073-5.912 4.037-8.981 2.15-22.42-13.797-56.596-17.797-83.076-9.732-3.434 1.041-7.062-.902-8.097-4.337-1.037-3.434.908-7.055 4.341-8.091 30.32-9.209 68.006-4.75 94.071 11.039 3.068 1.887 4.033 5.906 2.142 8.97zm.88-23.744c-26.887-15.967-71.338-17.434-97.058-9.658-4.122 1.242-8.477-1.095-9.722-5.219-1.245-4.122 1.096-8.476 5.22-9.723 29.581-8.968 78.757-7.245 109.821 11.201 3.732 2.213 4.962 7.012 2.744 10.733-2.214 3.732-7.01 4.964-10.734 2.746-.212-.127-.427-.234-.634-.367l-.637.017z"/>
+  </svg>
+);
+
 export default function FileUploader() {
   // State management
   const [loading, setLoading] = useState(false);
@@ -168,10 +176,10 @@ export default function FileUploader() {
           columnOrder: ["Album", "Artist", "Songs", "Plays", "Minutes Played"],
           columnWidths: {
             "Album": "35%",
-            "Artist": "35%",
+            "Artist": "30%",
             "Songs": "10%",
             "Plays": "10%",
-            "Minutes Played": "10%"
+            "Minutes Played": "15%"
           }
         };
       case "artist":
@@ -306,6 +314,8 @@ export default function FileUploader() {
             sortColumn={sortColumn}
             sortDirection={sortDirection}
             onSort={handleSort}
+            initialRowCount={100}
+            rowIncrement={50}
           />
         </div>
       </CardContent>
@@ -397,7 +407,10 @@ export default function FileUploader() {
   return (
     <div className="flex flex-col items-center space-y-6 p-6 bg-black text-spotify-off-white font-sans">
       <div className="w-full max-w-6xl">
-        <h1 className="text-2xl font-bold text-spotify-green mb-6 text-center">Spotify Data Explorer</h1>
+        <h1 className="text-2xl font-bold text-spotify-green mb-6 text-center">
+          <SpotifyLogo />
+          Spotify Data Explorer
+        </h1>
         <TabNavigation tabs={tabs} defaultTab="upload" activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
     </div>

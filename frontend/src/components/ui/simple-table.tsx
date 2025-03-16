@@ -1,18 +1,37 @@
 // src/components/ui/simple-table.tsx
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect, useRef, useCallback } from "react";
 
 interface SimpleTableProps {
   data: any[];
-  // Optional prop to specify column order
+  // Specify column order
   columnOrder?: string[];
-  // Optional prop to specify column widths
-  columnWidths?: { [key: string]: number | string };
+  // Specify column widths - allow undefined properties
+  columnWidths?: { [key: string]: string | number | undefined };
+  // Props for external sorting control
+  sortColumn?: string | null;
+  sortDirection?: "asc" | "desc";
+  onSort?: (column: string) => void;
+  // Initial row count to display
+  initialRowCount?: number;
+  // Number of additional rows to add when scrolling
+  rowIncrement?: number;
 }
 
-export const SimpleTable = ({ data, columnOrder, columnWidths = {} }: SimpleTableProps) => {
-  const [sortColumn, setSortColumn] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+export const SimpleTable = ({ 
+  data, 
+  columnOrder, 
+  columnWidths = {}, 
+  sortColumn, 
+  sortDirection = "desc", 
+  onSort,
+  initialRowCount = 100,
+  rowIncrement = 50
+}: SimpleTableProps) => {
+  // State for number of rows to display
+  const [visibleRows, setVisibleRows] = useState(initialRowCount);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const endObserverRef = useRef<HTMLDivElement>(null);
 
   // If no data, show message
   if (!data || data.length === 0) {
@@ -45,47 +64,6 @@ export const SimpleTable = ({ data, columnOrder, columnWidths = {} }: SimpleTabl
     return <div className="text-spotify-off-white p-4">No columns found in data</div>;
   }
 
-  // Handle column sorting
-  const handleSort = (column: string) => {
-    if (sortColumn === column) {
-      // Toggle direction if clicking the same column
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      // Set new column and default to descending (for most played first)
-      setSortColumn(column);
-      setSortDirection("desc");
-    }
-  };
-
-  // Sort the data based on current sort settings
-  const sortedData = [...data].sort((a, b) => {
-    if (!sortColumn) {
-      return 0; // No sorting
-    }
-
-    let aValue = a[sortColumn];
-    let bValue = b[sortColumn];
-
-    // Handle nulls/undefined
-    if (aValue === undefined || aValue === null) return 1;
-    if (bValue === undefined || bValue === null) return -1;
-
-    // Convert to numbers for numeric columns
-    if (typeof aValue === "number" || !isNaN(Number(aValue))) {
-      aValue = Number(aValue);
-      bValue = Number(bValue);
-    }
-
-    // Do the comparison based on sort direction
-    if (aValue < bValue) {
-      return sortDirection === "asc" ? -1 : 1;
-    }
-    if (aValue > bValue) {
-      return sortDirection === "asc" ? 1 : -1;
-    }
-    return 0;
-  });
-
   // Format cell value for display
   const formatCellValue = (column: string, value: any): string => {
     if (value === undefined || value === null) return "";
@@ -103,11 +81,50 @@ export const SimpleTable = ({ data, columnOrder, columnWidths = {} }: SimpleTabl
     return String(value);
   };
 
+  // Function to load more rows when scrolling
+  const loadMoreRows = useCallback(() => {
+    if (visibleRows < data.length) {
+      setVisibleRows(prevCount => Math.min(prevCount + rowIncrement, data.length));
+    }
+  }, [visibleRows, data.length, rowIncrement]);
+
+  // Setup intersection observer for infinite scrolling
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMoreRows();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentEndObserver = endObserverRef.current;
+    if (currentEndObserver) {
+      observer.observe(currentEndObserver);
+    }
+
+    return () => {
+      if (currentEndObserver) {
+        observer.unobserve(currentEndObserver);
+      }
+    };
+  }, [loadMoreRows]);
+
+  // Reset visible rows when data changes
+  useEffect(() => {
+    setVisibleRows(initialRowCount);
+  }, [data, initialRowCount]);
+
+  // Get only the visible rows
+  const visibleData = data.slice(0, visibleRows);
+  const hasMoreRows = visibleRows < data.length;
+
   return (
-    <div className="overflow-x-auto w-full">
+    <div className="overflow-x-auto w-full" ref={tableContainerRef}>
       <table className="w-full border-collapse bg-spotify-dark-gray text-spotify-off-white" style={{ tableLayout: 'fixed' }}>
         <thead>
-          <tr className="border-b border-spotify-medium-gray">
+          <tr className="border-b border-spotify-medium-gray sticky top-0 bg-spotify-dark-gray z-10">
             {displayColumns.map((column) => (
               <th 
                 key={column} 
@@ -118,7 +135,7 @@ export const SimpleTable = ({ data, columnOrder, columnWidths = {} }: SimpleTabl
                   overflow: 'hidden',
                   textOverflow: 'ellipsis'
                 }}
-                onClick={() => handleSort(column)}
+                onClick={() => onSort && onSort(column)}
               >
                 <div className="flex items-center">
                   <span>{column}</span>
@@ -133,7 +150,7 @@ export const SimpleTable = ({ data, columnOrder, columnWidths = {} }: SimpleTabl
           </tr>
         </thead>
         <tbody>
-          {sortedData.map((row, rowIndex) => (
+          {visibleData.map((row, rowIndex) => (
             <tr 
               key={rowIndex} 
               className={rowIndex % 2 === 0 ? "bg-spotify-dark-gray" : "bg-black/30 hover:bg-spotify-medium-gray"}
@@ -155,6 +172,21 @@ export const SimpleTable = ({ data, columnOrder, columnWidths = {} }: SimpleTabl
           ))}
         </tbody>
       </table>
+      
+      {/* Loading indicator and intersection observer target */}
+      {hasMoreRows && (
+        <div 
+          ref={endObserverRef}
+          className="py-4 text-center text-spotify-off-white"
+        >
+          Loading more...
+        </div>
+      )}
+      
+      {/* Show counts */}
+      <div className="text-right text-sm text-spotify-medium-gray p-2">
+        Showing {visibleData.length} of {data.length} rows
+      </div>
     </div>
   );
 };
