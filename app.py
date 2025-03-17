@@ -194,13 +194,25 @@ class DataParser:
         # Sort the data
         try:
             ascending = direction.lower() != "desc"
+            
+            # Make sure the column exists in the dataframe
+            if sort_column not in df.columns:
+                # Try to find a close match (case-insensitive)
+                possible_columns = [col for col in df.columns if col.lower() == sort_column.lower()]
+                if possible_columns:
+                    sort_column = possible_columns[0]
+                else:
+                    # Default to "Plays" if column doesn't exist
+                    sort_column = "Plays"
+                    
             sorted_df = df.sort_values(by=sort_column, ascending=ascending)
             sorted_data = sorted_df.to_dict(orient="records")
             
             # Cache the result
             cache[cache_key] = sorted_data
             return sorted_data
-        except:
+        except Exception as e:
+            print(f"Error during sorting: {e}")
             # Fallback if sorting fails
             return df.to_dict(orient="records")
 
@@ -306,7 +318,15 @@ def get_sorted_data(aggregation_level):
     sort_column = request.args.get('column', 'Plays')
     direction = request.args.get('direction', 'desc')
     
+    # Ensure the column name exists in the data
     data = current_parser.get_sorted_data(aggregation_level, sort_column, direction)
+    
+    # If empty result, check if column may have a different case
+    if not data and sort_column not in ['Plays', 'Minutes Played', 'Albums', 'Songs']:
+        # Try with first letter capitalized 
+        sort_column_cap = sort_column.capitalize()
+        data = current_parser.get_sorted_data(aggregation_level, sort_column_cap, direction)
+    
     return jsonify({'data': data}), 200
 
 if __name__ == '__main__':
