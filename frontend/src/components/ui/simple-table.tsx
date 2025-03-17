@@ -125,6 +125,17 @@ export const SimpleTable = ({
       <table className="w-full border-collapse bg-spotify-dark-gray text-spotify-off-white" style={{ tableLayout: 'fixed' }}>
         <thead>
           <tr className="border-b border-spotify-medium-gray sticky top-0 bg-spotify-dark-gray z-10">
+            {/* Row number column */}
+            <th 
+              className="p-3 text-left font-semibold w-16"
+              style={{ 
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
+              #
+            </th>
             {displayColumns.map((column) => (
               <th 
                 key={column} 
@@ -153,8 +164,19 @@ export const SimpleTable = ({
           {visibleData.map((row, rowIndex) => (
             <tr 
               key={rowIndex} 
-              className={`${rowIndex % 2 === 0 ? "bg-spotify-dark-gray" : "bg-spotify-darker-gray"} hover:bg-spotify-medium-gray`}
+              className={`${rowIndex % 2 === 0 ? "bg-spotify-dark-gray" : "bg-black/30"} hover:bg-spotify-medium-gray`}
             >
+              {/* Row number cell */}
+              <td 
+                className="p-3 border-t border-spotify-dark-gray text-spotify-light-gray"
+                style={{ 
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}
+              >
+                {rowIndex + 1}
+              </td>
               {displayColumns.map((column) => (
                 <td 
                   key={`${rowIndex}-${column}`} 
