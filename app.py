@@ -52,7 +52,7 @@ class DataParser:
             # Convert to Pandas DataFrame
             df = pd.DataFrame(value)
 
-            # Aggregate by 'spotify_track_uri' at this step
+            # Aggregate by track name and artist name at this step
             grouped_df = df.groupby(['master_metadata_track_name', 'master_metadata_album_artist_name']).agg(
                 total_ms_played=pd.NamedAgg(column='ms_played', aggfunc='sum'),
                 play_count=pd.NamedAgg(column='spotify_track_uri', aggfunc='count'),
@@ -69,13 +69,13 @@ class DataParser:
         combined_df = pd.concat(dfs, ignore_index=True)
         print(f"Columns in combined_df before groupby: {combined_df.columns}")
 
-        # Perform grouping after combining
+        # Perform final grouping by track_name and artist_name to properly aggregate different URIs
         final_grouped_df = combined_df.groupby(
-            ['album_name', 'track_name']
+            ['track_name', 'artist_name']
         ).agg(
             total_ms_played=pd.NamedAgg(column='total_ms_played', aggfunc='sum'),
             play_count=pd.NamedAgg(column='play_count', aggfunc='sum'),
-            artist_name=pd.NamedAgg(column='artist_name', aggfunc='first'),
+            album_name=pd.NamedAgg(column='album_name', aggfunc='first'),
         ).reset_index()
 
         # Convert milliseconds to minutes and round to nearest hundredths place
