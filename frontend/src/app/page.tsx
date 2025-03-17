@@ -166,9 +166,9 @@ export default function FileUploader() {
           columnWidths: {
             "Song": "30%",
             "Artist": "25%",
-            "Album": "25%",
+            "Album": "20%",
             "Plays": "10%",
-            "Minutes Played": "10%"
+            "Minutes Played": "15%"
           }
         };
       case "album":

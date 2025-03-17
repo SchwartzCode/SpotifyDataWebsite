@@ -49,6 +49,7 @@
   --color-spotify-green-darker: var(--spotify-green-darker);
   --color-spotify-green-darkest: var(--spotify-green-darkest);
   --color-spotify-green: var(--spotify-green);
+  --color-spotify-darker-gray: var(--spotify-darker-gray);
   --color-spotify-dark-gray: var(--spotify-dark-gray);
   --color-spotify-medium-gray: var(--spotify-medium-gray);
   --color-spotify-light-gray: var(--spotify-light-gray);
@@ -95,6 +96,7 @@
   --spotify-green-darker: oklch(0.478 0.134 151.11);
   --spotify-green-darkest: oklch(0.428 0.134 151.11);
   --spotify-green: oklch(0.69 0.19 149);
+  --spotify-darker-gray: oklch(0.2 0.00 70);
   --spotify-dark-gray: oklch(0.25 0.00 70);
   --spotify-medium-gray: oklch(0.35 0.00 70);
   --spotify-light-gray: oklch(0.45 0.00 70);
@@ -141,6 +143,7 @@
   --spotify-green-darkest: oklch(0.302 0.134 151.11);
   --spotify-green: oklch(0.99 0.02 95);
   --spotify-dark-gray: oklch(0.1 0.00 70);
+  --spotify-darker-gray: oklch(0.05 0.00 70);
   --dark-gray: oklch(0.0 0.0 127);
 }
 

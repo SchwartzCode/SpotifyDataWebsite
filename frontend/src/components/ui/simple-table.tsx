@@ -153,7 +153,7 @@ export const SimpleTable = ({
           {visibleData.map((row, rowIndex) => (
             <tr 
               key={rowIndex} 
-              className={rowIndex % 2 === 0 ? "bg-spotify-dark-gray" : "bg-black/30 hover:bg-spotify-medium-gray"}
+              className={`${rowIndex % 2 === 0 ? "bg-spotify-dark-gray" : "bg-spotify-darker-gray"} hover:bg-spotify-medium-gray`}
             >
               {displayColumns.map((column) => (
                 <td 
