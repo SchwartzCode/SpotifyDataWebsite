@@ -6,9 +6,14 @@
 * Docker images to run scripts in
 * fix uploading multiple times (need to refresh page to reupload)
 * clean up frontend folder
-* make it so when you click on an album or artist, it shows their top albums / songs
-* add search functionality (ideally keep row numbers)
-* when switching tabs in top tracks, arrow stays in the same place. Should be cached by tab
+* when searching, keep original row numbers
 * add ability to select a specific range in time
+* sorting by different columns doesn't work in album/artist popup
+* favorite song on a rolling window of most listened to song in the last 1 month (DUDE!!!)
+* play the song (ideally with spotify?) when you click on it (maybe with a play button)
+
+Feature not a bug :tm:
+* when switching tabs, arrow stays sorting on whatever you were sorting by on the last tab
+
 
 ![image](https://github.com/user-attachments/assets/bc594dfd-468d-48df-8229-c2f8b865f1dd)
