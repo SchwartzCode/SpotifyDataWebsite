@@ -23,7 +23,7 @@ interface SimpleTableProps {
 }
 
 export const SimpleTable = ({ 
-  data, 
+  data = [], // Provide a default empty array
   columnOrder, 
   columnWidths = {}, 
   sortColumn, 
@@ -33,7 +33,7 @@ export const SimpleTable = ({
   rowIncrement = 50,
   onAlbumClick,
   onArtistClick,
-  onRowClick,
+  onRowClick
 }: SimpleTableProps) => {
   // State for number of rows to display
   const [visibleRows, setVisibleRows] = useState(initialRowCount);
@@ -42,9 +42,13 @@ export const SimpleTable = ({
 
   // If no data, show message
   if (!data || data.length === 0) {
-    return <div className="text-spotify-off-white p-4">No data available</div>;
+    return (
+      <div className="text-spotify-off-white p-4 text-center">
+        No results found. Try adjusting your search.
+      </div>
+    );
   }
-
+  
   // Get all available columns from data
   const availableColumns = Object.keys(data[0] || {});
 
@@ -76,10 +80,16 @@ export const SimpleTable = ({
   const formatCellValue = (column: string, value: any, row: any): ReactNode => {
     if (value === undefined || value === null) return "";
     
-    // Make album and artist cells clickable
+    // Make album and artist cells clickable with consistent styling
     if (column === "Album" && onAlbumClick) {
       return (
-        <span className="hover:text-spotify-green hover:underline">
+        <span 
+          className="hover:text-spotify-green hover:underline cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAlbumClick(value);
+          }}
+        >
           {String(value)}
         </span>
       );
@@ -87,7 +97,13 @@ export const SimpleTable = ({
     
     if (column === "Artist" && onArtistClick) {
       return (
-        <span className="hover:text-spotify-green hover:underline">
+        <span 
+          className="hover:text-spotify-green hover:underline cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            onArtistClick(value);
+          }}
+        >
           {String(value)}
         </span>
       );

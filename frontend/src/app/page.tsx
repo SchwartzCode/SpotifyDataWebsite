@@ -52,7 +52,7 @@ export default function FileUploader() {
 
   // Memoized filtered and sorted data
   const filteredAndSortedData = useMemo(() => {
-    if (!currentData.length) return [];
+    if (!currentData || !currentData.length) return [];
     
     // First filter by search term
     let filtered = [...currentData];
@@ -78,8 +78,8 @@ export default function FileUploader() {
       });
     }
     
-    // Then sort
-    if (!sortColumn) return filtered;
+    // Then sort - only if we have results
+    if (filtered.length === 0 || !sortColumn) return filtered;
     
     // Only sort client-side if the data is small enough
     if (filtered.length <= 300) {
@@ -129,7 +129,7 @@ export default function FileUploader() {
     setDetailName(album);
     setDetailModalOpen(true);
   }, []);
-
+  
   // Handler for artist clicks
   const handleArtistClick = useCallback((artist: string) => {
     setDetailType("artist");
@@ -144,16 +144,19 @@ export default function FileUploader() {
 
   // Add the handler for row clicks
 
+  // Make sure handleRowClick and other click handlers don't depend on the filtered data
   const handleRowClick = useCallback((row: any) => {
     // Handle the row click based on the current aggregation level
     if (aggregationLevel === "album" && row.Album) {
-      handleAlbumClick(row.Album);
+      setDetailType("album");
+      setDetailName(row.Album);
+      setDetailModalOpen(true);
     } else if (aggregationLevel === "artist" && row.Artist) {
-      handleArtistClick(row.Artist);
+      setDetailType("artist");
+      setDetailName(row.Artist);
+      setDetailModalOpen(true);
     }
-    // For song level, we don't need to do anything since the row itself doesn't
-    // directly represent an album or artist
-  }, [aggregationLevel, handleAlbumClick, handleArtistClick]);
+  }, [aggregationLevel]);
 
   // Handle file drop and processing
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -320,95 +323,121 @@ export default function FileUploader() {
     </Card>
   );
 
-  // Render a DataTable if we have data
-  const TracksTable = isDataLoaded ? (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {aggregationLevel === "song" 
-            ? "Your Top Tracks" 
-            : aggregationLevel === "album" 
-              ? "Your Top Albums" 
-              : "Your Top Artists"}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {/* Aggregation selector */}
-        <div className="mb-6">
-          <AggregationSelector 
-            value={aggregationLevel}
-            onChange={handleAggregationChange}
-          />
-        </div>
+  // Render a DataTable, even if we dont have data
+  const TracksTable = useMemo(() => {
+    return isDataLoaded ? (
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {aggregationLevel === "song" 
+              ? "Your Top Tracks" 
+              : aggregationLevel === "album" 
+                ? "Your Top Albums" 
+                : "Your Top Artists"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Aggregation selector */}
+          <div className="mb-6">
+            <AggregationSelector 
+              value={aggregationLevel}
+              onChange={handleAggregationChange}
+            />
+          </div>
+          
+          {/* Search bar */}
+          <div className="mb-4">
+            <SearchBar 
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder={`Search ${aggregationLevel === "song" ? "songs, artists or albums" : 
+                          aggregationLevel === "album" ? "albums or artists" : "artists"}...`}
+            />
+            {searchTerm && (
+              <div className="mt-2 text-sm text-spotify-light-gray">
+                {filteredAndSortedData.length > 0 
+                  ? `Showing ${filteredAndSortedData.length} results for "${searchTerm}"`
+                  : `No results found for "${searchTerm}"`}
+              </div>
+            )}
+          </div>
         
-        {/* Search bar */}
-        <div className="mb-4">
-          <SearchBar 
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder={`Search ${aggregationLevel === "song" ? "songs, artists or albums" : 
-                      aggregationLevel === "album" ? "albums or artists" : "artists"}...`}
-          />
-          {searchTerm && (
-            <div className="mt-2 text-sm text-spotify-light-gray">
-              Showing {filteredAndSortedData.length} results for "{searchTerm}"
+          <div className="mb-6 grid grid-cols-3 gap-4">
+            <div className="bg-spotify-dark-gray p-4 rounded-lg">
+              <p className="text-spotify-off-white text-sm">
+                {aggregationLevel === "song" 
+                  ? "Total Tracks" 
+                  : aggregationLevel === "album" 
+                    ? "Total Albums" 
+                    : "Total Artists"}
+              </p>
+              <p className="text-spotify-green text-2xl font-bold">{stats.count}</p>
             </div>
-          )}
-        </div>
-      
-        <div className="mb-6 grid grid-cols-3 gap-4">
-          <div className="bg-spotify-dark-gray p-4 rounded-lg">
-            <p className="text-spotify-off-white text-sm">
-              {aggregationLevel === "song" 
-                ? "Total Tracks" 
-                : aggregationLevel === "album" 
-                  ? "Total Albums" 
-                  : "Total Artists"}
-            </p>
-            <p className="text-spotify-green text-2xl font-bold">{stats.count}</p>
+            <div className="bg-spotify-dark-gray p-4 rounded-lg">
+              <p className="text-spotify-off-white text-sm">Total Plays</p>
+              <p className="text-spotify-green text-2xl font-bold">
+                {stats.plays.toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-spotify-dark-gray p-4 rounded-lg">
+              <p className="text-spotify-off-white text-sm">Total Minutes</p>
+              <p className="text-spotify-green text-2xl font-bold">
+                {stats.minutes.toLocaleString(undefined, {maximumFractionDigits: 0})}
+              </p>
+            </div>
           </div>
-          <div className="bg-spotify-dark-gray p-4 rounded-lg">
-            <p className="text-spotify-off-white text-sm">Total Plays</p>
-            <p className="text-spotify-green text-2xl font-bold">
-              {stats.plays.toLocaleString()}
-            </p>
-          </div>
-          <div className="bg-spotify-dark-gray p-4 rounded-lg">
-            <p className="text-spotify-off-white text-sm">Total Minutes</p>
-            <p className="text-spotify-green text-2xl font-bold">
-              {stats.minutes.toLocaleString(undefined, {maximumFractionDigits: 0})}
-            </p>
-          </div>
-        </div>
-        
-        {/* Table with loading indicator overlay when sorting large datasets */}
-        <div className="relative">
+          
+          {/* Table with loading indicator overlay when sorting large datasets */}
+          <div className="relative">
           {loading && (
             <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10 rounded">
               <div className="bg-spotify-dark-gray px-4 py-2 rounded">Sorting data...</div>
             </div>
           )}
-          <SimpleTable 
-            data={filteredAndSortedData} 
-            columnOrder={columnOrder}
-            columnWidths={columnWidths}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-            initialRowCount={100}
-            rowIncrement={50}
-            onAlbumClick={handleAlbumClick}
-            onArtistClick={handleArtistClick}
-            onRowClick={handleRowClick}
-          />
+          {filteredAndSortedData.length > 0 ? (
+            <SimpleTable 
+              data={filteredAndSortedData} 
+              columnOrder={columnOrder}
+              columnWidths={columnWidths}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              initialRowCount={100}
+              rowIncrement={50}
+              onAlbumClick={handleAlbumClick}
+              onArtistClick={handleArtistClick}
+              onRowClick={handleRowClick}
+            />
+          ) : (
+            <div className="bg-spotify-dark-gray p-6 rounded text-spotify-off-white text-center">
+              No matching results found. Try adjusting your search.
+            </div>
+          )}
         </div>
-      </CardContent>
-    </Card>
-  ) : (
-    <div className="text-center text-spotify-off-white p-6">
-      Upload your Spotify data to view your listening history
-    </div>
-  );
+        </CardContent>
+      </Card>
+    ) : (
+      <div className="text-center text-spotify-off-white p-6">
+        Upload your Spotify data to view your listening history
+      </div>
+    );
+  }, [
+    isDataLoaded, 
+    aggregationLevel, 
+    handleAggregationChange,
+    searchTerm,
+    filteredAndSortedData,
+    stats,
+    loading,
+    columnOrder,
+    columnWidths,
+    sortColumn,
+    sortDirection,
+    handleSort,
+    handleAlbumClick,
+    handleArtistClick,
+    handleRowClick
+  ]);
 
   // Stats view with more detailed insights - memoized to prevent unnecessary renders
   const StatsView = useMemo(() => (
