@@ -11,6 +11,7 @@
 * sorting by different columns doesn't work in album/artist popup
 * favorite song on a rolling window of most listened to song in the last 1 month (DUDE!!!)
 * play the song (ideally with spotify?) when you click on it (maybe with a play button)
+* when merging data from a single and a song from an album, default to using the album
 
 Feature not a bug :tm:
 * when switching tabs, arrow stays sorting on whatever you were sorting by on the last tab
