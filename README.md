@@ -14,6 +14,7 @@
 * play the song (ideally with spotify?) when you click on it (maybe with a play button)
 * when merging data from a single and a song from an album, default to using the album
 * itunes data?
+* add ability to see number of full listens through of the album (minimum time on a song in the album)
 
 Feature not a bug :tm:
 * when switching tabs, arrow stays sorting on whatever you were sorting by on the last tab
