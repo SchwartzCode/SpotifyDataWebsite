@@ -329,5 +329,47 @@ def get_sorted_data(aggregation_level):
     
     return jsonify({'data': data}), 200
 
+@app.route('/api/data/detail/<detail_type>/<detail_name>', methods=['GET'])
+def get_detail_data(detail_type, detail_name):
+    """Get detailed data for a specific album or artist"""
+    global current_parser
+    
+    if current_parser is None:
+        return jsonify({'message': 'No data available. Please upload a file first.'}), 404
+    
+    # Get the base data
+    song_data = current_parser.parse()
+    
+    if song_data.empty:
+        return jsonify({'message': 'No data available'}), 404
+    
+    # Filter based on the detail type
+    if detail_type == 'album':
+        filtered_data = song_data[song_data['Album'] == detail_name]
+    elif detail_type == 'artist':
+        filtered_data = song_data[song_data['Artist'] == detail_name]
+    else:
+        return jsonify({'message': 'Invalid detail type'}), 400
+    
+    # Sort by plays descending
+    filtered_data = filtered_data.sort_values('Plays', ascending=False)
+    
+    # Convert to records format for JSON serialization
+    detail_data = filtered_data.to_dict(orient="records")
+    
+    # Get some summary statistics
+    summary = {
+        'total_plays': int(filtered_data['Plays'].sum()),
+        'total_minutes': float(filtered_data['Minutes Played'].sum()),
+        'song_count': len(filtered_data)
+    }
+    
+    return jsonify({
+        'data': detail_data,
+        'summary': summary,
+        'name': detail_name,
+        'type': detail_type
+    }), 200
+
 if __name__ == '__main__':
     app.run(debug=True)

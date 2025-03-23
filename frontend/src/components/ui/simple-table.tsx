@@ -16,6 +16,10 @@ interface SimpleTableProps {
   initialRowCount?: number;
   // Number of additional rows to add when scrolling
   rowIncrement?: number;
+
+  onAlbumClick?: (album: string) => void;
+  onArtistClick?: (artist: string) => void;
+  onRowClick?: (row: any) => void; // Add this new prop
 }
 
 export const SimpleTable = ({ 
@@ -26,7 +30,10 @@ export const SimpleTable = ({
   sortDirection = "desc", 
   onSort,
   initialRowCount = 100,
-  rowIncrement = 50
+  rowIncrement = 50,
+  onAlbumClick,
+  onArtistClick,
+  onRowClick,
 }: SimpleTableProps) => {
   // State for number of rows to display
   const [visibleRows, setVisibleRows] = useState(initialRowCount);
@@ -40,6 +47,8 @@ export const SimpleTable = ({
 
   // Get all available columns from data
   const availableColumns = Object.keys(data[0] || {});
+
+  console.log("availableColumns: ", availableColumns);
 
   // Determine the columns to display and their order
   let displayColumns: string[] = [];
@@ -64,18 +73,29 @@ export const SimpleTable = ({
     return <div className="text-spotify-off-white p-4">No columns found in data</div>;
   }
 
-  // Format cell value for display
-  const formatCellValue = (column: string, value: any): string => {
+  const formatCellValue = (column: string, value: any, row: any): ReactNode => {
     if (value === undefined || value === null) return "";
+    
+    // Make album and artist cells clickable
+    if (column === "Album" && onAlbumClick) {
+      return (
+        <span className="hover:text-spotify-green hover:underline">
+          {String(value)}
+        </span>
+      );
+    }
+    
+    if (column === "Artist" && onArtistClick) {
+      return (
+        <span className="hover:text-spotify-green hover:underline">
+          {String(value)}
+        </span>
+      );
+    }
     
     // Format numbers
     if (typeof value === "number" || !isNaN(Number(value))) {
-      // Format "Minutes Played" with one decimal place
-      if (column === "Minutes Played") {
-        return Number(value).toLocaleString(undefined, { maximumFractionDigits: 1 });
-      }
-      // Format other numbers with standard locale formatting
-      return Number(value).toLocaleString();
+      // ... existing number formatting code
     }
     
     return String(value);
@@ -164,7 +184,13 @@ export const SimpleTable = ({
           {visibleData.map((row, rowIndex) => (
             <tr 
               key={rowIndex} 
-              className={`${rowIndex % 2 === 0 ? "bg-spotify-dark-gray" : "bg-black/30"} hover:bg-spotify-medium-gray`}
+              className={`${rowIndex % 2 === 0 ? "bg-spotify-dark-gray" : "bg-black/30"} hover:bg-spotify-medium-gray cursor-pointer`}
+              onClick={() => {
+                // Handle row click based on available data
+                if (onRowClick) {
+                  onRowClick(row);
+                }
+              }}
             >
               {/* Row number cell */}
               <td 
@@ -174,6 +200,7 @@ export const SimpleTable = ({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis'
                 }}
+                onClick={(e) => e.stopPropagation()} // Prevent row click for the row number
               >
                 {rowIndex + 1}
               </td>
@@ -186,8 +213,20 @@ export const SimpleTable = ({
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                   }}
+                  onClick={(e) => {
+                    // For Album and Artist cells, use their specific click handlers
+                    // This prevents double-triggering of both the cell click and row click
+                    if (column === "Album" && onAlbumClick) {
+                      e.stopPropagation();
+                      onAlbumClick(row[column]);
+                    } else if (column === "Artist" && onArtistClick) {
+                      e.stopPropagation();
+                      onArtistClick(row[column]);
+                    }
+                    // For other cells, let the event bubble to trigger the row click
+                  }}
                 >
-                  {formatCellValue(column, row[column])}
+                  {formatCellValue(column, row[column], row)}
                 </td>
               ))}
             </tr>

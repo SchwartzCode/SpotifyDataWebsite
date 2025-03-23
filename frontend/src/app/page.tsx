@@ -6,13 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SimpleTable } from "@/components/ui/simple-table";
 import { TabNavigation } from "@/components/ui/tab-navigation";
 import { AggregationSelector, AggregationLevel } from "@/components/ui/aggregation-selector";
+import { SearchBar } from "@/components/ui/search-bar";
+import { DetailModal } from "@/components/ui/detail-modal";
 
 // Define the type for data items
 interface DataItem {
   [key: string]: any;
 }
 
-// TODO: is this normal?
 // Spotify logo SVG component
 const SpotifyLogo = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 168" width="32" height="32" className="inline-block mr-2 align-middle">
@@ -32,6 +33,12 @@ export default function FileUploader() {
   const [activeTab, setActiveTab] = useState<string>("upload");
   const [sortColumn, setSortColumn] = useState<string | null>("Plays");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  
+  // New state for search and detail modal
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [detailModalOpen, setDetailModalOpen] = useState<boolean>(false);
+  const [detailType, setDetailType] = useState<"album" | "artist">("album");
+  const [detailName, setDetailName] = useState<string>("");
 
   // Use memoized current data to prevent unnecessary recalculations
   const currentData = useMemo(() => {
@@ -43,18 +50,110 @@ export default function FileUploader() {
     }
   }, [aggregationLevel, songData, albumData, artistData]);
 
+  // Memoized filtered and sorted data
+  const filteredAndSortedData = useMemo(() => {
+    if (!currentData.length) return [];
+    
+    // First filter by search term
+    let filtered = [...currentData];
+    
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(item => {
+        // Search in relevant columns based on aggregation level
+        if (aggregationLevel === "song") {
+          return (
+            (item.Song && item.Song.toLowerCase().includes(term)) ||
+            (item.Artist && item.Artist.toLowerCase().includes(term)) ||
+            (item.Album && item.Album.toLowerCase().includes(term))
+          );
+        } else if (aggregationLevel === "album") {
+          return (
+            (item.Album && item.Album.toLowerCase().includes(term)) ||
+            (item.Artist && item.Artist.toLowerCase().includes(term))
+          );
+        } else { // artist
+          return item.Artist && item.Artist.toLowerCase().includes(term);
+        }
+      });
+    }
+    
+    // Then sort
+    if (!sortColumn) return filtered;
+    
+    // Only sort client-side if the data is small enough
+    if (filtered.length <= 300) {
+      return [...filtered].sort((a, b) => {
+        let valueA = a[sortColumn];
+        let valueB = b[sortColumn];
+        
+        // Handle null/undefined
+        if (valueA === undefined || valueA === null) return 1;
+        if (valueB === undefined || valueB === null) return -1;
+        
+        // Convert to numbers for numeric columns
+        if (typeof valueA === "number" || !isNaN(Number(valueA))) {
+          valueA = Number(valueA);
+          valueB = Number(valueB);
+        }
+        
+        if (valueA < valueB) {
+          return sortDirection === "asc" ? -1 : 1;
+        }
+        if (valueA > valueB) {
+          return sortDirection === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    
+    return filtered; // For large datasets, we rely on the backend sorting
+  }, [currentData, searchTerm, sortColumn, sortDirection, aggregationLevel]);
+
   // Memoized statistics for better performance
   const stats = useMemo(() => {
-    if (!currentData || currentData.length === 0) {
+    if (!filteredAndSortedData || filteredAndSortedData.length === 0) {
       return { count: 0, plays: 0, minutes: 0 };
     }
     
-    const count = currentData.length;
-    const plays = currentData.reduce((sum, item) => sum + (Number(item.Plays) || 0), 0);
-    const minutes = currentData.reduce((sum, item) => sum + (Number(item["Minutes Played"]) || 0), 0);
+    const count = filteredAndSortedData.length;
+    const plays = filteredAndSortedData.reduce((sum, item) => sum + (Number(item.Plays) || 0), 0);
+    const minutes = filteredAndSortedData.reduce((sum, item) => sum + (Number(item["Minutes Played"]) || 0), 0);
     
     return { count, plays, minutes };
-  }, [currentData]);
+  }, [filteredAndSortedData]);
+
+  // Handler for album clicks
+  const handleAlbumClick = useCallback((album: string) => {
+    setDetailType("album");
+    setDetailName(album);
+    setDetailModalOpen(true);
+  }, []);
+
+  // Handler for artist clicks
+  const handleArtistClick = useCallback((artist: string) => {
+    setDetailType("artist");
+    setDetailName(artist);
+    setDetailModalOpen(true);
+  }, []);
+
+  // Close the detail modal
+  const closeDetailModal = useCallback(() => {
+    setDetailModalOpen(false);
+  }, []);
+
+  // Add the handler for row clicks
+
+  const handleRowClick = useCallback((row: any) => {
+    // Handle the row click based on the current aggregation level
+    if (aggregationLevel === "album" && row.Album) {
+      handleAlbumClick(row.Album);
+    } else if (aggregationLevel === "artist" && row.Artist) {
+      handleArtistClick(row.Artist);
+    }
+    // For song level, we don't need to do anything since the row itself doesn't
+    // directly represent an album or artist
+  }, [aggregationLevel, handleAlbumClick, handleArtistClick]);
 
   // Handle file drop and processing
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -196,39 +295,6 @@ export default function FileUploader() {
     }
   }, [aggregationLevel]);
 
-  // Memoized sorted data to prevent unnecessary sorts on each render
-  const sortedData = useMemo(() => {
-    if (!sortColumn || !currentData.length) return currentData;
-    
-    // Only sort client-side if the data is small enough
-    if (currentData.length <= 300) {
-      return [...currentData].sort((a, b) => {
-        let valueA = a[sortColumn];
-        let valueB = b[sortColumn];
-        
-        // Handle null/undefined
-        if (valueA === undefined || valueA === null) return 1;
-        if (valueB === undefined || valueB === null) return -1;
-        
-        // Convert to numbers for numeric columns
-        if (typeof valueA === "number" || !isNaN(Number(valueA))) {
-          valueA = Number(valueA);
-          valueB = Number(valueB);
-        }
-        
-        if (valueA < valueB) {
-          return sortDirection === "asc" ? -1 : 1;
-        }
-        if (valueA > valueB) {
-          return sortDirection === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    
-    return currentData; // For large datasets, we rely on the backend sorting
-  }, [currentData, sortColumn, sortDirection]);
-
   // Render the upload area
   const UploadArea = (
     <Card>
@@ -274,6 +340,21 @@ export default function FileUploader() {
             onChange={handleAggregationChange}
           />
         </div>
+        
+        {/* Search bar */}
+        <div className="mb-4">
+          <SearchBar 
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder={`Search ${aggregationLevel === "song" ? "songs, artists or albums" : 
+                      aggregationLevel === "album" ? "albums or artists" : "artists"}...`}
+          />
+          {searchTerm && (
+            <div className="mt-2 text-sm text-spotify-light-gray">
+              Showing {filteredAndSortedData.length} results for "{searchTerm}"
+            </div>
+          )}
+        </div>
       
         <div className="mb-6 grid grid-cols-3 gap-4">
           <div className="bg-spotify-dark-gray p-4 rounded-lg">
@@ -308,7 +389,7 @@ export default function FileUploader() {
             </div>
           )}
           <SimpleTable 
-            data={sortedData} 
+            data={filteredAndSortedData} 
             columnOrder={columnOrder}
             columnWidths={columnWidths}
             sortColumn={sortColumn}
@@ -316,6 +397,9 @@ export default function FileUploader() {
             onSort={handleSort}
             initialRowCount={100}
             rowIncrement={50}
+            onAlbumClick={handleAlbumClick}
+            onArtistClick={handleArtistClick}
+            onRowClick={handleRowClick}
           />
         </div>
       </CardContent>
@@ -362,7 +446,12 @@ export default function FileUploader() {
                 <div className="space-y-2">
                   {artistData.slice(0, 5).map((artist, index) => (
                     <div key={index} className="flex justify-between items-center">
-                      <span className="text-spotify-off-white">{artist.Artist}</span>
+                      <button 
+                        onClick={() => handleArtistClick(artist.Artist)}
+                        className="text-spotify-off-white hover:text-spotify-green hover:underline text-left"
+                      >
+                        {artist.Artist}
+                      </button>
                       <span className="text-spotify-green font-medium">
                         {Number(artist.Plays || 0).toLocaleString()} plays
                       </span>
@@ -379,7 +468,12 @@ export default function FileUploader() {
                 <div className="space-y-2">
                   {albumData.slice(0, 5).map((album, index) => (
                     <div key={index} className="flex justify-between items-center">
-                      <span className="text-spotify-off-white">{album.Album}</span>
+                      <button 
+                        onClick={() => handleAlbumClick(album.Album)}
+                        className="text-spotify-off-white hover:text-spotify-green hover:underline text-left"
+                      >
+                        {album.Album}
+                      </button>
                       <span className="text-spotify-green font-medium">
                         {Number(album.Plays || 0).toLocaleString()} plays
                       </span>
@@ -396,7 +490,7 @@ export default function FileUploader() {
         )}
       </CardContent>
     </Card>
-  ), [isDataLoaded, songData, albumData, artistData]);
+  ), [isDataLoaded, songData, albumData, artistData, handleAlbumClick, handleArtistClick]);
 
   const tabs = [
     { id: "upload", label: "Upload", content: UploadArea },
@@ -413,6 +507,16 @@ export default function FileUploader() {
         </h1>
         <TabNavigation tabs={tabs} defaultTab="upload" activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
+      
+      {/* Detail Modal */}
+      {detailModalOpen && (
+        <DetailModal
+          detailType={detailType}
+          detailName={detailName}
+          isOpen={detailModalOpen}
+          onClose={closeDetailModal}
+        />
+      )}
     </div>
   );
 }
