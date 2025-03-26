@@ -19,5 +19,9 @@
 Feature not a bug :tm:
 * when switching tabs, arrow stays sorting on whatever you were sorting by on the last tab
 
+Hosting as a website:
+* put everything in a docker container
+* amazon ecs should be able to host the container
+
 
 ![image](https://github.com/user-attachments/assets/bc594dfd-468d-48df-8229-c2f8b865f1dd)
