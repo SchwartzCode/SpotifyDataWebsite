@@ -3,6 +3,16 @@
 ## Running the app
 `./run.sh start`
 
+## Deployment
+Build and tag container:
+`docker build -f docker/Dockerfile -t spotify-data-explorer:latest .`
+
+If it is your first time deploying on this machine, authenticate docker to ECR registery:
+`aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin YOUR_ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com`
+
+Push new container to aws:
+`docker tag spotify-data-explorer:latest YOUR_ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com/spotify-data-explorer:latest`
+
 ## TODO
 * better popup on failure
 * script to run everything
