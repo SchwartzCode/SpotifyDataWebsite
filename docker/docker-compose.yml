@@ -1,0 +1,14 @@
+services:
+  spotify-data-explorer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - spotify-data:/app/uploads
+      - spotify-extracted:/app/extracted
+
+volumes:
+  spotify-data:
+  spotify-extracted:

@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import pandas as pd
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/')
 CORS(app)  # Enable CORS for frontend requests
 
 UPLOAD_FOLDER = 'uploads'
@@ -222,6 +222,10 @@ current_parser = None
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')  # Serve the frontend
+
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     global current_parser
@@ -372,4 +376,4 @@ def get_detail_data(detail_type, detail_name):
     }), 200
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
