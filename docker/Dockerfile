@@ -25,6 +25,9 @@ WORKDIR /app
 # Copy Python requirements
 COPY ../requirements.txt .
 
+# Copy in demo data
+COPY ../demo_data.zip .
+
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
