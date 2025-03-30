@@ -8,6 +8,7 @@ import { TabNavigation } from "@/components/ui/tab-navigation";
 import { AggregationSelector, AggregationLevel } from "@/components/ui/aggregation-selector";
 import { SearchBar } from "@/components/ui/search-bar";
 import { DetailModal } from "@/components/ui/detail-modal";
+import { API_BASE_URL } from "@/lib/api-config";
 
 // Define the type for data items
 interface DataItem {
@@ -170,7 +171,7 @@ export default function FileUploader() {
 
     try {
       // Upload and process data at all levels at once
-      const response = await fetch("http://localhost:5000/api/upload", {
+      const response = await fetch(`${API_BASE_URL}/upload`, {
         method: "POST",
         body: formData,
       });
@@ -228,7 +229,7 @@ export default function FileUploader() {
       setLoading(true);
       try {
         const response = await fetch(
-          `http://localhost:5000/api/data/${aggregationLevel}/sort?column=${column}&direction=${newDirection}`
+          `${API_BASE_URL}/data/${aggregationLevel}/sort?column=${column}&direction=${newDirection}`
         );
         const result = await response.json();
         

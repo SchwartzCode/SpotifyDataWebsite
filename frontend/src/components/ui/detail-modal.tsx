@@ -1,6 +1,7 @@
 // frontend/src/components/ui/detail-modal.tsx
 import { useState, useEffect, useMemo } from "react";
 import { SimpleTable } from "@/components/ui/simple-table";
+import { API_BASE_URL } from "@/lib/api-config";
 
 interface DetailModalProps {
   detailType: "album" | "artist";
@@ -36,7 +37,7 @@ export const DetailModal = ({ detailType, detailName, isOpen, onClose }: DetailM
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:5000/api/data/detail/${detailType}/${encodeURIComponent(detailName)}`);
+      const response = await fetch(`${API_BASE_URL}/data/detail/${detailType}/${encodeURIComponent(detailName)}`);
       
       if (!response.ok) {
         throw new Error("Failed to fetch detail data");

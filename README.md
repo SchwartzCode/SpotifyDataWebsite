@@ -1,7 +1,7 @@
 # Spotify Streaming Data Parsing Website
 
 ## Running the app
-`docker compose -f docker/docker-compose.yml up --build`
+`./run.sh start`
 
 ## TODO
 * better popup on failure
