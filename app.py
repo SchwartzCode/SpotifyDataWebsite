@@ -216,6 +216,31 @@ class DataParser:
             # Fallback if sorting fails
             return df.to_dict(orient="records")
 
+def load_json_data_from_zip(filename, file_path):
+
+    # Extract the ZIP file
+    extract_path = os.path.join(app.config['EXTRACT_FOLDER'], filename.replace('.zip', ''))
+    os.makedirs(extract_path, exist_ok=True)
+
+    with zipfile.ZipFile(file_path, 'r') as zip_ref:
+        zip_ref.extractall(extract_path)
+
+    # Load JSON files
+    json_data = {}
+    for root, _, files in os.walk(extract_path):
+        for file in files:
+            print(f"Loading in: {file}")
+            if file.endswith('.json'):
+                json_path = os.path.join(root, file)
+                try:
+                    with open(json_path, 'r', encoding='utf-8') as f:  # Safe loading with UTF-8
+                        print("Adding data!")
+                        json_data[file] = json.load(f)
+                except json.JSONDecodeError:
+                    print("error error error\n\n")
+                    return jsonify({'message': f'Error reading {file}, invalid JSON format'}), 400
+    return json_data
+
 # Store the most recent parser for the /api/data endpoints
 current_parser = None
 
@@ -236,31 +261,11 @@ def upload_file():
     file = request.files['file']
     
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file_name = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
         file.save(file_path)
 
-        # Extract the ZIP file
-        extract_path = os.path.join(app.config['EXTRACT_FOLDER'], filename.replace('.zip', ''))
-        os.makedirs(extract_path, exist_ok=True)
-
-        with zipfile.ZipFile(file_path, 'r') as zip_ref:
-            zip_ref.extractall(extract_path)
-
-        # Load JSON files
-        json_data = {}
-        for root, _, files in os.walk(extract_path):
-            for file in files:
-                print(f"Loading in: {file}")
-                if file.endswith('.json'):
-                    json_path = os.path.join(root, file)
-                    try:
-                        with open(json_path, 'r', encoding='utf-8') as f:  # Safe loading with UTF-8
-                            print("Adding data!")
-                            json_data[file] = json.load(f)
-                    except json.JSONDecodeError:
-                        print("error error error\n\n")
-                        return jsonify({'message': f'Error reading {file}, invalid JSON format'}), 400
+        json_data = load_json_data_from_zip(file_name, file_path)
 
         # Create new parser and process the data
         data_parser = DataParser(json_data)
@@ -374,6 +379,51 @@ def get_detail_data(detail_type, detail_name):
         'name': detail_name,
         'type': detail_type
     }), 200
+
+@app.route('/api/demo-data', methods=['GET'])
+def load_demo_data():
+    """Load demo data for users to explore without uploading their own files"""
+    try:
+        demo_data_name = 'demo_data.zip'
+        
+        # Check if the demo data file exists
+        if not os.path.exists(demo_data_name):
+            return jsonify({'message': 'Demo data not found'}), 404
+        
+        json_data = load_json_data_from_zip(demo_data_name, demo_data_name)
+        
+        # Create a new parser instance with the demo data
+        global current_parser
+        data_parser = DataParser(json_data)
+        current_parser = data_parser
+        
+        # Process all data at once for faster subsequent access
+        song_df = data_parser.parse()
+        album_df = data_parser.get_album_aggregation(song_df)
+        artist_df = data_parser.get_artist_aggregation(song_df)
+        
+        # Convert to records format for JSON serialization
+        song_data = song_df.to_dict(orient="records")
+        album_data = album_df.to_dict(orient="records")
+        artist_data = artist_df.to_dict(orient="records")
+        
+        # Pre-sort data by plays for common use case
+        data_parser.get_sorted_data('song', 'Plays', 'desc')
+        data_parser.get_sorted_data('album', 'Plays', 'desc')
+        data_parser.get_sorted_data('artist', 'Plays', 'desc')
+        
+        # Return all three aggregation levels
+        response_data = {
+            'song': song_data,
+            'album': album_data,
+            'artist': artist_data
+        }
+        
+        return jsonify({'message': 'Demo data loaded successfully!', 'data': response_data}), 200
+        
+    except Exception as e:
+        print(f"Error loading demo data: {e}")
+        return jsonify({'message': f'Error loading demo data: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

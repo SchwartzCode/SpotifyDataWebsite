@@ -10,8 +10,11 @@ Build and tag container:
 If it is your first time deploying on this machine, authenticate docker to ECR registery:
 `aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin YOUR_ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com`
 
-Push new container to aws:
+Tag the image:
 `docker tag spotify-data-explorer:latest YOUR_ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com/spotify-data-explorer:latest`
+
+Push new container to aws:
+`docker push YOUR_ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com/spotify-data-explorer:latest`
 
 ## TODO
 * better popup on failure
@@ -28,6 +31,7 @@ Push new container to aws:
 * when merging data from a single and a song from an album, default to using the album
 * itunes data?
 * add ability to see number of full listens through of the album (minimum time on a song in the album)
+* reduce aws costs
 
 Feature not a bug :tm:
 * when switching tabs, arrow stays sorting on whatever you were sorting by on the last tab

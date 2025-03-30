@@ -255,6 +255,49 @@ export default function FileUploader() {
     }
   }, [aggregationLevel, sortColumn, sortDirection, currentData.length]);
 
+  // Handler for loading demo data
+  const loadDemoData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Call the demo data endpoint
+      const response = await fetch(`${API_BASE_URL}/demo-data`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to load demo data");
+      }
+
+      // Ensure we have arrays for each data type
+      const songDataArray = Array.isArray(result.data.song) ? result.data.song : [];
+      const albumDataArray = Array.isArray(result.data.album) ? result.data.album : [];
+      const artistDataArray = Array.isArray(result.data.artist) ? result.data.artist : [];
+
+      // Store data for all aggregation levels
+      setSongData(songDataArray);
+      setAlbumData(albumDataArray);
+      setArtistData(artistDataArray);
+      
+      setIsDataLoaded(songDataArray.length > 0);
+      
+      // Automatically switch to the "Top Tracks" tab after data is loaded
+      if (songDataArray.length > 0) {
+        setActiveTab("tracks");
+      }
+
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
+      console.error("Error loading demo data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { "application/zip": [".zip"] },
@@ -308,7 +351,7 @@ export default function FileUploader() {
       <CardContent>
         <div
           {...getRootProps()}
-          className="border-2 border-dashed border-gray-300 p-6 rounded-xl text-center cursor-pointer hover:bg-spotify-medium-gray"
+          className="border-2 border-dashed border-gray-300 p-6 rounded-xl text-center cursor-pointer hover:bg-spotify-medium-gray mb-4"
         >
           <input {...getInputProps()} />
           {isDragActive ? (
@@ -317,7 +360,23 @@ export default function FileUploader() {
             <p className="text-spotify-off-white">Drag & drop a ZIP file, or click to select one</p>
           )}
         </div>
-
+  
+        <div className="text-center mt-4">
+          <div className="flex items-center justify-center">
+            <div className="border-t border-spotify-medium-gray flex-grow"></div>
+            <span className="mx-4 text-spotify-light-gray">or</span>
+            <div className="border-t border-spotify-medium-gray flex-grow"></div>
+          </div>
+          
+          <button 
+            onClick={loadDemoData}
+            className="mt-4 px-6 py-2 bg-spotify-green text-black rounded-full hover:bg-spotify-green-dark transition-colors font-medium"
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : 'Try Demo Data'}
+          </button>
+        </div>
+  
         {loading && <p className="text-center mt-4">Loading...</p>}
         {error && <p className="text-red-500 text-center mt-4">{error}</p>}
       </CardContent>
