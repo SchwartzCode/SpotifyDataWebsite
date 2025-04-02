@@ -8,6 +8,7 @@ import { TabNavigation } from "@/components/ui/tab-navigation";
 import { AggregationSelector, AggregationLevel } from "@/components/ui/aggregation-selector";
 import { SearchBar } from "@/components/ui/search-bar";
 import { DetailModal } from "@/components/ui/detail-modal";
+import { Instructions } from "@/components/ui/instructions";
 import { API_BASE_URL } from "@/lib/api-config";
 
 // Define the type for data items
@@ -31,7 +32,7 @@ export default function FileUploader() {
   const [artistData, setArtistData] = useState<DataItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [aggregationLevel, setAggregationLevel] = useState<AggregationLevel>("song");
-  const [activeTab, setActiveTab] = useState<string>("upload");
+  const [activeTab, setActiveTab] = useState<string>("instructions");
   const [sortColumn, setSortColumn] = useState<string | null>("Plays");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   
@@ -342,6 +343,22 @@ export default function FileUploader() {
     }
   }, [aggregationLevel]);
 
+  const InstructionsArea = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Instructions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div>
+          <Instructions />
+        </div>
+  
+        {loading && <p className="text-center mt-4">Loading...</p>}
+        {error && <p className="text-red-500 text-center mt-4">{error}</p>}
+      </CardContent>
+    </Card>
+  );
+
   // Render the upload area
   const UploadArea = (
     <Card>
@@ -582,6 +599,7 @@ export default function FileUploader() {
   ), [isDataLoaded, songData, albumData, artistData, handleAlbumClick, handleArtistClick]);
 
   const tabs = [
+    { id: "instructions", label: "Instructions", content: InstructionsArea },
     { id: "upload", label: "Upload", content: UploadArea },
     { id: "tracks", label: "Top Tracks", content: TracksTable },
     { id: "stats", label: "Statistics", content: StatsView },
@@ -594,7 +612,7 @@ export default function FileUploader() {
           <SpotifyLogo />
           Spotify Data Explorer
         </h1>
-        <TabNavigation tabs={tabs} defaultTab="upload" activeTab={activeTab} setActiveTab={setActiveTab} />
+        <TabNavigation tabs={tabs} defaultTab="instructions" activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
       
       {/* Detail Modal */}

@@ -1,3 +1,4 @@
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -15,7 +16,40 @@ module.exports = {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            color: 'var(--spotify-off-white)',
+            h1: {
+              color: 'var(--spotify-green)',
+            },
+            h2: {
+              color: 'var(--spotify-green)',
+            },
+            h3: {
+              color: 'var(--spotify-green)',
+            },
+            strong: {
+              color: 'var(--spotify-off-white)',
+            },
+            a: {
+              color: 'var(--spotify-green)',
+              '&:hover': {
+                color: 'var(--spotify-green-dark)',
+              },
+            },
+            li: {
+              color: 'var(--spotify-off-white)',
+              p: {
+                color: 'var(--spotify-off-white)',
+              }
+            },
+          },
+        },
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 };
