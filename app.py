@@ -565,7 +565,7 @@ def get_monthly_top_songs():
     if current_parser is None:
         return jsonify({'message': 'No data available. Please upload a file first.'}), 404
     
-    # Get top 5 songs for each month
+    # Get top 10 songs for each month
     monthly_top_songs = current_parser.get_monthly_top_songs(top_count=10)
     
     return jsonify({'data': monthly_top_songs}), 200
