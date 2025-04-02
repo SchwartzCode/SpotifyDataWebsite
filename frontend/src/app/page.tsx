@@ -443,7 +443,7 @@ export default function FileUploader() {
             <div className="bg-spotify-dark-gray p-4 rounded-lg">
               <p className="text-spotify-off-white text-sm">
                 {aggregationLevel === "song" 
-                  ? "Total Tracks" 
+                  ? "Unique Songs" 
                   : aggregationLevel === "album" 
                     ? "Total Albums" 
                     : "Total Artists"}
@@ -528,7 +528,7 @@ export default function FileUploader() {
             {/* Top stats cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-spotify-dark-gray p-4 rounded-lg">
-                <p className="text-spotify-off-white text-sm">Total Tracks</p>
+                <p className="text-spotify-off-white text-sm">Unique Songs</p>
                 <p className="text-spotify-green text-2xl font-bold">{songData.length}</p>
               </div>
               <div className="bg-spotify-dark-gray p-4 rounded-lg">
