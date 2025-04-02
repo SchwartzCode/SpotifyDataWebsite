@@ -164,10 +164,9 @@ class DataParser:
 
     def get_sorted_data(self, data_type, sort_column, direction="desc"):
         """Get pre-sorted data for faster client-side rendering"""
+
         # Get the appropriate data set
         if data_type == 'song':
-            if self.processed_data is None:
-                self.parse()
             df = self.processed_data
             cache = self.song_data_sorted
         elif data_type == 'album':
@@ -215,6 +214,110 @@ class DataParser:
             print(f"Error during sorting: {e}")
             # Fallback if sorting fails
             return df.to_dict(orient="records")
+        
+    def get_monthly_top_songs(self):
+        """Get the top song for each month based on play count within that month"""
+        # If no data processed yet, process it
+        if self.processed_data is None:
+            self.parse()
+            
+        if self.processed_data is None or self.processed_data.empty:
+            return []
+        
+        # Demo data or data without timestamps - generate synthetic months
+        if not self.data or not isinstance(self.data, dict):
+            # Create synthetic monthly data using the same logic as before
+            song_df = self.processed_data.copy()
+            top_songs = song_df.sort_values('Plays', ascending=False).head(8)
+            
+            months = ['2023-10', '2023-11', '2023-12', '2024-01', '2024-02', '2024-03']
+            
+            monthly_top_songs = []
+            for i, (_, song) in enumerate(top_songs.iterrows()):
+                if i < len(months):
+                    # For demo data, reduce plays to make it realistic for one month
+                    # and vary it a bit for each month
+                    monthly_plays = max(int(song['Plays'] * (0.2 + (i * 0.05))), 1)
+                    monthly_minutes = max(float(song['Minutes Played'] * (0.2 + (i * 0.05))), 0.5)
+                    
+                    monthly_top_songs.append({
+                        'month': months[i],
+                        'song': song['Song'],
+                        'artist': song['Artist'],
+                        'album': song['Album'],
+                        'plays': monthly_plays,
+                        'minutes_played': round(monthly_minutes, 1)
+                    })
+            
+            # Sort by month (most recent first)
+            monthly_top_songs.sort(reverse=True, key=lambda x: x['month'])
+            return monthly_top_songs
+        
+        # With real data, we need to calculate monthly stats
+        # Create a data structure to hold monthly plays for each song
+        monthly_songs = {}  # format: {month: {song_key: {'plays': X, 'minutes': Y, song data...}}}
+        
+        for file_name, file_data in self.data.items():
+            for play in file_data:
+                # Skip entries without necessary data
+                if not all(key in play for key in ['ts', 'master_metadata_track_name', 'ms_played']):
+                    continue
+                    
+                # Extract month from timestamp (format YYYY-MM-DD...)
+                if isinstance(play['ts'], str) and len(play['ts']) >= 7:
+                    month = play['ts'][:7]  # Get YYYY-MM
+                    
+                    # Create song key for identification
+                    song_key = (
+                        play['master_metadata_track_name'],
+                        play.get('master_metadata_album_artist_name', ''),
+                    )
+                    
+                    # Get album name
+                    album_name = play.get('master_metadata_album_album_name', '')
+                    
+                    # Initialize month data if needed
+                    if month not in monthly_songs:
+                        monthly_songs[month] = {}
+                    
+                    # Initialize song data if needed
+                    if song_key not in monthly_songs[month]:
+                        monthly_songs[month][song_key] = {
+                            'song': song_key[0],
+                            'artist': song_key[1],
+                            'album': album_name,
+                            'plays': 0,
+                            'minutes_played': 0
+                        }
+                    
+                    # Update counts
+                    monthly_songs[month][song_key]['plays'] += 1
+                    # Convert ms to minutes
+                    monthly_songs[month][song_key]['minutes_played'] += play['ms_played'] / 60000
+        
+        # Find top song for each month
+        monthly_top_songs = []
+        
+        for month, songs in monthly_songs.items():
+            if not songs:  # Skip months with no data
+                continue
+                
+            # Find top song by plays
+            top_song_key = max(songs.keys(), key=lambda k: songs[k]['plays'])
+            top_song_data = songs[top_song_key]
+            
+            monthly_top_songs.append({
+                'month': month,
+                'song': top_song_data['song'],
+                'artist': top_song_data['artist'],
+                'album': top_song_data['album'],
+                'plays': top_song_data['plays'],
+                'minutes_played': round(top_song_data['minutes_played'], 1)
+            })
+        
+        # Sort by month (most recent first)
+        monthly_top_songs.sort(reverse=True, key=lambda x: x['month'])
+        return monthly_top_songs
 
 def load_json_data_from_zip(filename, file_path):
 
@@ -304,7 +407,7 @@ def get_data(aggregation_level):
     
     if current_parser is None:
         return jsonify({'message': 'No data available. Please upload a file first.'}), 404
-    
+
     if aggregation_level == 'song':
         data = current_parser.parse().to_dict(orient="records")
     elif aggregation_level == 'album':
@@ -424,6 +527,19 @@ def load_demo_data():
     except Exception as e:
         print(f"Error loading demo data: {e}")
         return jsonify({'message': f'Error loading demo data: {str(e)}'}), 500
+
+# Add this endpoint to the Flask application in app.py
+@app.route('/api/monthly-top-songs', methods=['GET'])
+def get_monthly_top_songs():
+    """Endpoint to get the top song for each month"""
+    global current_parser
+    
+    if current_parser is None:
+        return jsonify({'message': 'No data available. Please upload a file first.'}), 404
+    
+    monthly_top_songs = current_parser.get_monthly_top_songs()
+    
+    return jsonify({'data': monthly_top_songs}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -10,6 +10,7 @@ import { SearchBar } from "@/components/ui/search-bar";
 import { DetailModal } from "@/components/ui/detail-modal";
 import { Instructions } from "@/components/ui/instructions";
 import { API_BASE_URL } from "@/lib/api-config";
+import { MonthlyTopSongs } from "@/components/ui/monthly-top-songs";
 
 // Define the type for data items
 interface DataItem {
@@ -448,7 +449,7 @@ export default function FileUploader() {
                     ? "Total Albums" 
                     : "Total Artists"}
               </p>
-              <p className="text-spotify-green text-2xl font-bold">{stats.count}</p>
+              <p className="text-spotify-green text-2xl font-bold">{stats.count.toLocaleString()}</p>
             </div>
             <div className="bg-spotify-dark-gray p-4 rounded-lg">
               <p className="text-spotify-off-white text-sm">Total Plays</p>
@@ -529,7 +530,7 @@ export default function FileUploader() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-spotify-dark-gray p-4 rounded-lg">
                 <p className="text-spotify-off-white text-sm">Unique Songs</p>
-                <p className="text-spotify-green text-2xl font-bold">{songData.length}</p>
+                <p className="text-spotify-green text-2xl font-bold">{songData.length.toLocaleString()}</p>
               </div>
               <div className="bg-spotify-dark-gray p-4 rounded-lg">
                 <p className="text-spotify-off-white text-sm">Total Plays</p>
@@ -602,6 +603,7 @@ export default function FileUploader() {
     { id: "instructions", label: "Instructions", content: InstructionsArea },
     { id: "upload", label: "Upload", content: UploadArea },
     { id: "data", label: "Data", content: TracksTable },
+    { id: "monthly", label: "Top Song by Month", content: <MonthlyTopSongs /> },
     { id: "stats", label: "Statistics", content: StatsView },
   ];
 
