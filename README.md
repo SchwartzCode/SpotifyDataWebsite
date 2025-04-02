@@ -1,27 +1,28 @@
 # Spotify Streaming Data Parsing Website
 
-## Running the app
-`./run.sh start`
+## Running the app locally
+**Start the app:** `./run.sh start`
+
+**View the site**: Go to `localhost:5000` in a browser
+
+**Stop the app:** `./run.sh stop`
 
 ## Deployment
 Build and tag container:
 `docker build -f docker/Dockerfile -t spotify-data-explorer:latest .`
 
 If it is your first time deploying on this machine, authenticate docker to ECR registery:
-`aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin YOUR_ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com`
+`aws ecr get-login-password --region REGION_NAME | docker login --username AWS --password-stdin YOUR_ACCOUNT_ID.dkr.ecr.REGION_NAME.amazonaws.com`
 
 Tag the image:
-`docker tag spotify-data-explorer:latest YOUR_ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com/spotify-data-explorer:latest`
+`docker tag spotify-data-explorer:latest YOUR_ACCOUNT_ID.dkr.ecr.REGION_NAME.amazonaws.com/spotify-data-explorer:latest`
 
 Push new container to aws:
-`docker push YOUR_ACCOUNT_ID.dkr.ecr.us-east-2.amazonaws.com/spotify-data-explorer:latest`
+`docker push YOUR_ACCOUNT_ID.dkr.ecr.REGION_NAME.amazonaws.com/spotify-data-explorer:latest`
 
 ## TODO
 * better popup on failure
-* script to run everything
-* Docker images to run scripts in
 * fix uploading multiple times (need to refresh page to reupload)
-* clean up frontend folder
 * when searching, keep original row numbers
 * add ability to select a specific range in time
 * sorting by different columns doesn't work in album/artist popup
@@ -35,10 +36,5 @@ Push new container to aws:
 
 Feature not a bug :tm:
 * when switching tabs, arrow stays sorting on whatever you were sorting by on the last tab
-
-Hosting as a website:
-* put everything in a docker container
-* amazon ecs should be able to host the container
-
 
 ![image](https://github.com/user-attachments/assets/bc594dfd-468d-48df-8229-c2f8b865f1dd)
