@@ -195,9 +195,9 @@ export default function FileUploader() {
       
       setIsDataLoaded(songDataArray.length > 0);
       
-      // Automatically switch to the "Top Tracks" tab after data is loaded
+      // Automatically switch to the "Data" tab after data is loaded
       if (songDataArray.length > 0) {
-        setActiveTab("tracks");
+        setActiveTab("data");
       }
 
     } catch (err: unknown) {
@@ -282,9 +282,9 @@ export default function FileUploader() {
       
       setIsDataLoaded(songDataArray.length > 0);
       
-      // Automatically switch to the "Top Tracks" tab after data is loaded
+      // Automatically switch to the "Data" tab after data is loaded
       if (songDataArray.length > 0) {
-        setActiveTab("tracks");
+        setActiveTab("data");
       }
 
     } catch (err: unknown) {
@@ -407,7 +407,7 @@ export default function FileUploader() {
         <CardHeader>
           <CardTitle>
             {aggregationLevel === "song" 
-              ? "Your Top Tracks" 
+              ? "Your Data"
               : aggregationLevel === "album" 
                 ? "Your Top Albums" 
                 : "Your Top Artists"}
@@ -601,7 +601,7 @@ export default function FileUploader() {
   const tabs = [
     { id: "instructions", label: "Instructions", content: InstructionsArea },
     { id: "upload", label: "Upload", content: UploadArea },
-    { id: "tracks", label: "Top Tracks", content: TracksTable },
+    { id: "data", label: "Data", content: TracksTable },
     { id: "stats", label: "Statistics", content: StatsView },
   ];
 

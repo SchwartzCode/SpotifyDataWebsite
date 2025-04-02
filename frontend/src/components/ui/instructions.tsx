@@ -89,6 +89,12 @@ export const Instructions = () => {
             </li>
           </ul>
 
+          <h2 className="text-xl font-bold text-spotify-green mb-4">Want to add something to the site?</h2>
+          <p className="mt-1">Check out
+            <a href="https://github.com/SchwartzCode/SpotifyDataWebsite" target="_blank" rel="noopener noreferrer" className="text-spotify-green hover:underline">  the project on Github.</a>
+            and scroll down to the "Download your data" section.
+          </p>
+
         </div>
       </CardContent>
     </Card>
