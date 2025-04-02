@@ -27,7 +27,6 @@ Push new container to aws:
 * add ability to select a specific range in time
 * sorting by different columns doesn't work in album/artist popup
 * exit album/artist popup by clicking outside of the popup
-* favorite song on a rolling window of most listened to song in the last 1 month (DUDE!!!)
 * play the song (ideally with spotify?) when you click on it (maybe with a play button)
 * when merging data from a single and a song from an album, default to using the album
 * itunes data?

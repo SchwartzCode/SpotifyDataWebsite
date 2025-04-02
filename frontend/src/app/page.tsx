@@ -603,7 +603,7 @@ export default function FileUploader() {
     { id: "instructions", label: "Instructions", content: InstructionsArea },
     { id: "upload", label: "Upload", content: UploadArea },
     { id: "data", label: "Data", content: TracksTable },
-    { id: "monthly", label: "Top Song by Month", content: <MonthlyTopSongs /> },
+    { id: "monthly", label: "Top Songs by Month", content: <MonthlyTopSongs isDataLoaded={isDataLoaded} /> },
     { id: "stats", label: "Statistics", content: StatsView },
   ];
 
