@@ -1,5 +1,7 @@
 # Spotify Streaming Data Parsing Website
 
+![image](https://github.com/user-attachments/assets/bc594dfd-468d-48df-8229-c2f8b865f1dd)
+
 ## Running the app locally
 **Start the app:** `./run.sh start`
 
@@ -35,5 +37,3 @@ Push new container to aws:
 
 Feature not a bug :tm:
 * when switching tabs, arrow stays sorting on whatever you were sorting by on the last tab
-
-![image](https://github.com/user-attachments/assets/bc594dfd-468d-48df-8229-c2f8b865f1dd)
